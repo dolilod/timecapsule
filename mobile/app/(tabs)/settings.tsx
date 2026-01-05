@@ -39,6 +39,7 @@ import {
 } from '@/services/gmail';
 import * as AuthSession from 'expo-auth-session';
 import { ChildProfile } from '@/types';
+import { toDateOnlyString, fromDateOnlyString } from '@/services/date';
 
 // Google OAuth discovery document
 const discovery = {
@@ -74,7 +75,7 @@ export default function SettingsScreen() {
     if (defaultChild) {
       setEditName(defaultChild.name);
       setEditEmail(defaultChild.email);
-      setEditBirthday(new Date(defaultChild.birthday));
+      setEditBirthday(fromDateOnlyString(defaultChild.birthday));
     }
 
     // Load notification settings
@@ -218,7 +219,7 @@ export default function SettingsScreen() {
       const updated = await updateChildProfile(child.id, {
         name: editName.trim(),
         email: editEmail.trim().toLowerCase(),
-        birthday: editBirthday.toISOString(),
+        birthday: toDateOnlyString(editBirthday),
       });
 
       if (updated) {
@@ -238,7 +239,7 @@ export default function SettingsScreen() {
     if (child) {
       setEditName(child.name);
       setEditEmail(child.email);
-      setEditBirthday(new Date(child.birthday));
+      setEditBirthday(fromDateOnlyString(child.birthday));
     }
     setErrors({});
     setIsEditing(false);
@@ -299,18 +300,30 @@ export default function SettingsScreen() {
                 <Text style={styles.dateButtonText}>{formatDate(editBirthday)}</Text>
               </TouchableOpacity>
               {showDatePicker && (
-                <DateTimePicker
-                  value={editBirthday}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  maximumDate={new Date()}
-                  onChange={(event, selectedDate) => {
-                    setShowDatePicker(Platform.OS === 'ios');
-                    if (selectedDate) {
-                      setEditBirthday(selectedDate);
-                    }
-                  }}
-                />
+                <View style={styles.datePickerContainer}>
+                  <DateTimePicker
+                    value={editBirthday}
+                    mode="date"
+                    display="spinner"
+                    maximumDate={new Date()}
+                    onChange={(event, selectedDate) => {
+                      if (Platform.OS === 'android') {
+                        setShowDatePicker(false);
+                      }
+                      if (selectedDate) {
+                        setEditBirthday(selectedDate);
+                      }
+                    }}
+                  />
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity
+                      style={styles.datePickerDone}
+                      onPress={() => setShowDatePicker(false)}
+                    >
+                      <Text style={styles.datePickerDoneText}>Done</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               )}
             </View>
 
@@ -564,6 +577,22 @@ const styles = StyleSheet.create({
   dateButtonText: {
     fontSize: 16,
     color: '#000',
+  },
+  datePickerContainer: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  datePickerDone: {
+    backgroundColor: '#007AFF',
+    padding: 12,
+    alignItems: 'center',
+  },
+  datePickerDoneText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   buttonRow: {
     flexDirection: 'row',

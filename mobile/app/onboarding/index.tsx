@@ -14,6 +14,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text, View } from '@/components/Themed';
 import { saveChildProfile, isValidEmail } from '@/services/storage';
 import { scheduleDailyReminder } from '@/services/notifications';
+import { toDateOnlyString } from '@/services/date';
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function OnboardingScreen() {
       await saveChildProfile({
         name: childName,
         email: email.trim().toLowerCase(),
-        birthday: birthday.toISOString(),
+        birthday: toDateOnlyString(birthday),
       });
 
       // Schedule daily reminder notification
@@ -118,18 +119,30 @@ export default function OnboardingScreen() {
               <Text style={styles.dateButtonText}>{formatDate(birthday)}</Text>
             </TouchableOpacity>
             {showDatePicker && (
-              <DateTimePicker
-                value={birthday}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                maximumDate={new Date()}
-                onChange={(event, selectedDate) => {
-                  setShowDatePicker(Platform.OS === 'ios');
-                  if (selectedDate) {
-                    setBirthday(selectedDate);
-                  }
-                }}
-              />
+              <View style={styles.datePickerContainer}>
+                <DateTimePicker
+                  value={birthday}
+                  mode="date"
+                  display="spinner"
+                  maximumDate={new Date()}
+                  onChange={(event, selectedDate) => {
+                    if (Platform.OS === 'android') {
+                      setShowDatePicker(false);
+                    }
+                    if (selectedDate) {
+                      setBirthday(selectedDate);
+                    }
+                  }}
+                />
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity
+                    style={styles.datePickerDone}
+                    onPress={() => setShowDatePicker(false)}
+                  >
+                    <Text style={styles.datePickerDoneText}>Done</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             )}
           </View>
 
@@ -241,6 +254,22 @@ const styles = StyleSheet.create({
   dateButtonText: {
     fontSize: 16,
     color: '#000',
+  },
+  datePickerContainer: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  datePickerDone: {
+    backgroundColor: '#007AFF',
+    padding: 12,
+    alignItems: 'center',
+  },
+  datePickerDoneText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   button: {
     backgroundColor: '#007AFF',
