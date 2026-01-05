@@ -30,6 +30,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="outbox"
+        options={{
+          title: 'Outbox',
+          tabBarIcon: ({ color }) => <TabBarIcon name="clock-o" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',

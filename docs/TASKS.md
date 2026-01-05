@@ -145,7 +145,7 @@ git add . && git commit -m "feat: <task-name>"
 
 ---
 
-## Task D: Gmail OAuth + Send
+## Task D: Gmail OAuth + Send ✅
 
 **Branch:** `feat/gmail`
 
@@ -192,17 +192,17 @@ Google's installed-app flow uses PKCE. For Android/iOS native clients, `client_s
 > - Manual test steps (including how to confirm an email arrives)
 
 **Acceptance criteria:**
-- [ ] OAuth flow completes without errors
-- [ ] Tokens stored securely
-- [ ] Send button actually sends email via Gmail API
-- [ ] Email arrives at child's email with correct subject/body format
-- [ ] Photo attachment works
-- [ ] Settings shows connected email
-- [ ] Can disconnect and reconnect
+- [x] OAuth flow completes without errors
+- [x] Tokens stored securely
+- [x] Send button actually sends email via Gmail API
+- [x] Email arrives at child's email with correct subject/body format
+- [x] Photo attachment works
+- [x] Settings shows connected email
+- [x] Can disconnect and reconnect
 
 ---
 
-## Task E: Offline Outbox
+## Task E: Offline Outbox ✅
 
 **Branch:** `feat/outbox`
 
@@ -224,12 +224,12 @@ Google's installed-app flow uses PKCE. For Android/iOS native clients, `client_s
 > Output: files changed + manual test steps (include airplane-mode test).
 
 **Acceptance criteria:**
-- [ ] Send failure queues to outbox (not lost)
-- [ ] Outbox screen shows pending items
-- [ ] Manual retry works
-- [ ] Auto-retry on app open works
-- [ ] Successful retry removes from outbox
-- [ ] UI shows queued status appropriately
+- [x] Send failure queues to outbox (not lost)
+- [x] Outbox screen shows pending items
+- [x] Manual retry works
+- [x] Auto-retry on app open works
+- [x] Successful retry removes from outbox
+- [x] UI shows queued status appropriately
 
 ---
 

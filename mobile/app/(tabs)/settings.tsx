@@ -29,7 +29,23 @@ import {
   formatReminderTime,
   ReminderTime,
 } from '@/services/notifications';
+import {
+  isGmailConnected,
+  getConnectedEmail,
+  disconnectGmail,
+  createAuthRequest,
+  exchangeCodeForTokens,
+  getRedirectUri,
+} from '@/services/gmail';
+import * as AuthSession from 'expo-auth-session';
 import { ChildProfile } from '@/types';
+
+// Google OAuth discovery document
+const discovery = {
+  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+  tokenEndpoint: 'https://oauth2.googleapis.com/token',
+  revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
+};
 
 export default function SettingsScreen() {
   const [child, setChild] = useState<ChildProfile | null>(null);
@@ -46,6 +62,12 @@ export default function SettingsScreen() {
   const [reminderTime, setReminderTime] = useState<ReminderTime>({ hour: 20, minute: 0 });
   const [showTimePicker, setShowTimePicker] = useState(false);
 
+  // Gmail state
+  const [gmailConnected, setGmailConnected] = useState(false);
+  const [gmailEmail, setGmailEmail] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [authRequest, setAuthRequest] = useState<AuthSession.AuthRequest | null>(null);
+
   const loadData = useCallback(async () => {
     const defaultChild = await getDefaultChild();
     setChild(defaultChild);
@@ -60,6 +82,18 @@ export default function SettingsScreen() {
     setNotificationsEnabledState(enabled);
     const time = await getReminderTime();
     setReminderTime(time);
+
+    // Load Gmail connection status
+    const connected = await isGmailConnected();
+    setGmailConnected(connected);
+    if (connected) {
+      const email = await getConnectedEmail();
+      setGmailEmail(email);
+    }
+
+    // Prepare auth request
+    const request = createAuthRequest();
+    setAuthRequest(request);
   }, []);
 
   useFocusEffect(
@@ -101,6 +135,62 @@ export default function SettingsScreen() {
     const date = new Date();
     date.setHours(reminderTime.hour, reminderTime.minute, 0, 0);
     return date;
+  };
+
+  const handleConnectGmail = async () => {
+    if (!authRequest) {
+      Alert.alert('Error', 'Auth request not ready. Please try again.');
+      return;
+    }
+
+    setIsConnecting(true);
+    try {
+      const result = await authRequest.promptAsync(discovery);
+
+      if (result.type === 'success' && result.params.code) {
+        const tokens = await exchangeCodeForTokens(
+          result.params.code,
+          authRequest.codeVerifier || ''
+        );
+
+        if (tokens) {
+          setGmailConnected(true);
+          setGmailEmail(tokens.userEmail);
+          Alert.alert('Success', 'Gmail connected successfully!');
+        } else {
+          Alert.alert('Error', 'Failed to complete authentication.');
+        }
+      } else if (result.type === 'error') {
+        Alert.alert('Error', result.error?.message || 'Authentication failed.');
+      }
+    } catch (error) {
+      console.error('Error connecting Gmail:', error);
+      Alert.alert('Error', 'Failed to connect Gmail. Please try again.');
+    } finally {
+      setIsConnecting(false);
+      // Recreate auth request for next attempt
+      const request = createAuthRequest();
+      setAuthRequest(request);
+    }
+  };
+
+  const handleDisconnectGmail = () => {
+    Alert.alert(
+      'Disconnect Gmail',
+      'Are you sure you want to disconnect your Gmail account?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Disconnect',
+          style: 'destructive',
+          onPress: async () => {
+            await disconnectGmail();
+            setGmailConnected(false);
+            setGmailEmail(null);
+          },
+        },
+      ]
+    );
   };
 
   const validateForm = (): boolean => {
@@ -292,8 +382,38 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Gmail</Text>
         <View style={styles.profileCard}>
-          <Text style={styles.notConnected}>Not connected</Text>
-          <Text style={styles.hint}>Gmail connection coming in Task D</Text>
+          {gmailConnected ? (
+            <>
+              <View style={styles.gmailConnectedRow}>
+                <View style={styles.gmailConnectedInfo}>
+                  <Text style={styles.gmailConnectedLabel}>Connected</Text>
+                  <Text style={styles.gmailEmail}>{gmailEmail}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.disconnectButton}
+                  onPress={handleDisconnectGmail}
+                >
+                  <Text style={styles.disconnectButtonText}>Disconnect</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.notConnected}>Not connected</Text>
+              <Text style={styles.hint}>
+                Connect your Gmail to send memories to your child's email
+              </Text>
+              <TouchableOpacity
+                style={[styles.connectButton, isConnecting && styles.buttonDisabled]}
+                onPress={handleConnectGmail}
+                disabled={isConnecting}
+              >
+                <Text style={styles.connectButtonText}>
+                  {isConnecting ? 'Connecting...' : 'Connect Gmail'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
 
@@ -516,5 +636,48 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: '#007AFF',
+  },
+  gmailConnectedRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  gmailConnectedInfo: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  gmailConnectedLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#34C759',
+    marginBottom: 2,
+  },
+  gmailEmail: {
+    fontSize: 14,
+    color: '#666',
+  },
+  disconnectButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#f5f5f5',
+  },
+  disconnectButtonText: {
+    fontSize: 14,
+    color: '#ff3b30',
+    fontWeight: '500',
+  },
+  connectButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    padding: 14,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  connectButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -10,6 +10,8 @@ export interface ChildProfile {
 export interface CapsuleEntry {
   id: string;
   childId: string;
+  childName: string;
+  childEmail: string;
   text?: string;
   photoUris?: string[];
   voiceUri?: string;
@@ -17,6 +19,9 @@ export interface CapsuleEntry {
   status: 'pending' | 'sending' | 'sent' | 'failed';
   errorMessage?: string;
   dayNumber: number;
+  age: string; // e.g., "4 years, 2 months"
+  subject: string; // Pre-formatted email subject
+  body: string; // Pre-formatted email body
 }
 
 export interface GmailAuth {

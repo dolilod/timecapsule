@@ -9,9 +9,11 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Text, View } from '@/components/Themed';
 import { getDefaultChild, calculateDayNumber, calculateAge } from '@/services/storage';
@@ -20,15 +22,20 @@ import {
   getNextPromptInBucket,
   Prompt,
 } from '@/services/prompts';
-import { ChildProfile } from '@/types';
+import { isGmailConnected, sendEmail } from '@/services/gmail';
+import { addToOutbox } from '@/services/outbox';
+import { ChildProfile, CapsuleEntry } from '@/types';
 
 export default function ComposeScreen() {
+  const router = useRouter();
   const [child, setChild] = useState<ChildProfile | null>(null);
   const [prompt, setPrompt] = useState<Prompt | null>(null);
   const [text, setText] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showQueued, setShowQueued] = useState(false);
+  const [gmailConnected, setGmailConnected] = useState(false);
 
   const loadData = useCallback(async () => {
     const defaultChild = await getDefaultChild();
@@ -39,13 +46,20 @@ export default function ComposeScreen() {
       const randomPrompt = await getRandomPromptForAge(dayNumber);
       setPrompt(randomPrompt);
     }
+
+    // Check Gmail connection status
+    const connected = await isGmailConnected();
+    setGmailConnected(connected);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      // Only load if we don't have data yet (preserve state when switching tabs)
+      // Load data if we don't have it yet
       if (!child) {
         loadData();
+      } else {
+        // Always check Gmail status when screen is focused
+        isGmailConnected().then(setGmailConnected);
       }
     }, [child, loadData])
   );
@@ -106,44 +120,111 @@ export default function ComposeScreen() {
   const handleSend = async () => {
     if (!canSend || !child) return;
 
+    // Check if Gmail is connected
+    if (!gmailConnected) {
+      Alert.alert(
+        'Gmail Not Connected',
+        'Please connect your Gmail account in Settings to send memories.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Go to Settings',
+            onPress: () => router.push('/(tabs)/settings'),
+          },
+        ]
+      );
+      return;
+    }
+
     setIsSending(true);
 
     const dayNumber = calculateDayNumber(child.birthday);
     const age = calculateAge(child.birthday);
+    const dateStr = new Date().toISOString().split('T')[0];
 
-    const payload = {
+    // Format email per SPEC.md
+    // Subject: Day {N} — {YYYY-MM-DD} — {ChildName}
+    const subject = `Day ${dayNumber} — ${dateStr} — ${child.name}`;
+
+    // Body:
+    // Day {N} • Age {X years, Y months}
+    // {User's message text}
+    // #timecapsule
+    let body = `Day ${dayNumber} • Age ${age}\n\n`;
+    if (text.trim()) {
+      body += `${text.trim()}\n\n`;
+    }
+    body += '#timecapsule';
+
+    // Create capsule entry for potential outbox queueing
+    const entry: CapsuleEntry = {
+      id: uuidv4(),
       childId: child.id,
       childName: child.name,
       childEmail: child.email,
+      text: text.trim() || undefined,
+      photoUris: photos.length > 0 ? [...photos] : undefined,
+      createdAt: new Date().toISOString(),
+      status: 'sending',
       dayNumber,
       age,
-      date: new Date().toISOString().split('T')[0],
-      promptId: prompt?.id,
-      promptText: prompt?.text,
-      text: text.trim(),
-      photoCount: photos.length,
-      photoUris: photos,
+      subject,
+      body,
     };
 
-    // For now, just log the payload (Gmail integration coming in Task D)
-    console.log('=== CAPSULE PAYLOAD ===');
-    console.log(JSON.stringify(payload, null, 2));
-    console.log('=======================');
+    try {
+      const result = await sendEmail({
+        to: child.email,
+        subject,
+        body,
+        photoUri: photos.length > 0 ? photos[0] : undefined,
+      });
 
-    // Simulate send delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+      if (result.success) {
+        setIsSending(false);
+        setShowSuccess(true);
 
-    setIsSending(false);
-    setShowSuccess(true);
+        // Reset form after showing success
+        setTimeout(() => {
+          setText('');
+          setPhotos([]);
+          setShowSuccess(false);
+          loadData();
+        }, 2000);
+      } else {
+        // Queue to outbox on failure
+        entry.status = 'failed';
+        entry.errorMessage = result.error;
+        await addToOutbox(entry);
 
-    // Reset form after showing success
-    setTimeout(() => {
-      setText('');
-      setPhotos([]);
-      setShowSuccess(false);
-      // Get a new prompt for next entry
-      loadData();
-    }, 2000);
+        setIsSending(false);
+        setShowQueued(true);
+
+        // Reset form after showing queued
+        setTimeout(() => {
+          setText('');
+          setPhotos([]);
+          setShowQueued(false);
+          loadData();
+        }, 2000);
+      }
+    } catch (error) {
+      // Queue to outbox on error
+      entry.status = 'failed';
+      entry.errorMessage = error instanceof Error ? error.message : 'Network error';
+      await addToOutbox(entry);
+
+      setIsSending(false);
+      setShowQueued(true);
+
+      // Reset form after showing queued
+      setTimeout(() => {
+        setText('');
+        setPhotos([]);
+        setShowQueued(false);
+        loadData();
+      }, 2000);
+    }
   };
 
   if (!child) {
@@ -167,6 +248,27 @@ export default function ComposeScreen() {
     );
   }
 
+  if (showQueued) {
+    return (
+      <View style={styles.successContainer}>
+        <FontAwesome name="clock-o" size={64} color="#FF9500" />
+        <Text style={styles.successTitle}>Queued</Text>
+        <Text style={styles.successSubtitle}>
+          Will retry when connection is restored
+        </Text>
+        <TouchableOpacity
+          style={styles.viewOutboxButton}
+          onPress={() => {
+            setShowQueued(false);
+            router.push('/(tabs)/outbox');
+          }}
+        >
+          <Text style={styles.viewOutboxText}>View Outbox</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -178,6 +280,19 @@ export default function ComposeScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        {!gmailConnected && (
+          <TouchableOpacity
+            style={styles.gmailWarning}
+            onPress={() => router.push('/(tabs)/settings')}
+          >
+            <FontAwesome name="exclamation-triangle" size={16} color="#856404" />
+            <Text style={styles.gmailWarningText}>
+              Connect Gmail to send memories
+            </Text>
+            <FontAwesome name="chevron-right" size={12} color="#856404" />
+          </TouchableOpacity>
+        )}
+
         <View style={styles.header}>
           <Text style={styles.dayText}>Day {dayNumber}</Text>
           <Text style={styles.childInfo}>
@@ -281,6 +396,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: 100,
+  },
+  gmailWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff3cd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  gmailWarningText: {
+    flex: 1,
+    color: '#856404',
+    fontSize: 14,
+    fontWeight: '500',
   },
   header: {
     marginBottom: 20,
@@ -423,5 +553,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     opacity: 0.7,
     textAlign: 'center',
+  },
+  viewOutboxButton: {
+    marginTop: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
+  },
+  viewOutboxText: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '500',
   },
 });
