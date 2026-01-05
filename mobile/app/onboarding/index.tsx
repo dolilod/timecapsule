@@ -13,6 +13,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { Text, View } from '@/components/Themed';
 import { saveChildProfile, isValidEmail } from '@/services/storage';
+import { scheduleDailyReminder } from '@/services/notifications';
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -45,11 +46,15 @@ export default function OnboardingScreen() {
 
     setIsSubmitting(true);
     try {
+      const childName = name.trim();
       await saveChildProfile({
-        name: name.trim(),
+        name: childName,
         email: email.trim().toLowerCase(),
         birthday: birthday.toISOString(),
       });
+
+      // Schedule daily reminder notification
+      await scheduleDailyReminder(childName);
 
       router.replace('/(tabs)/compose');
     } catch (error) {

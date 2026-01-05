@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { hasCompletedOnboarding } from '@/services/storage';
+import { setupNotificationResponseListener } from '@/services/notifications';
 
 export {
   ErrorBoundary,
@@ -50,6 +51,10 @@ function RootLayoutNav() {
 
   useEffect(() => {
     checkOnboarding();
+
+    // Set up notification tap handler
+    const unsubscribe = setupNotificationResponseListener();
+    return unsubscribe;
   }, []);
 
   const checkOnboarding = async () => {

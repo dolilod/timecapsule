@@ -6,6 +6,7 @@ import {
   ScrollView,
   Alert,
   Platform,
+  Switch,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -18,6 +19,16 @@ import {
   calculateDayNumber,
   calculateAge,
 } from '@/services/storage';
+import {
+  getReminderTime,
+  saveReminderTime,
+  scheduleDailyReminder,
+  areNotificationsEnabled,
+  setNotificationsEnabled,
+  cancelAllScheduledNotifications,
+  formatReminderTime,
+  ReminderTime,
+} from '@/services/notifications';
 import { ChildProfile } from '@/types';
 
 export default function SettingsScreen() {
@@ -30,7 +41,12 @@ export default function SettingsScreen() {
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
   const [isSaving, setIsSaving] = useState(false);
 
-  const loadChild = useCallback(async () => {
+  // Notification state
+  const [notificationsEnabled, setNotificationsEnabledState] = useState(false);
+  const [reminderTime, setReminderTime] = useState<ReminderTime>({ hour: 20, minute: 0 });
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  const loadData = useCallback(async () => {
     const defaultChild = await getDefaultChild();
     setChild(defaultChild);
     if (defaultChild) {
@@ -38,13 +54,54 @@ export default function SettingsScreen() {
       setEditEmail(defaultChild.email);
       setEditBirthday(new Date(defaultChild.birthday));
     }
+
+    // Load notification settings
+    const enabled = await areNotificationsEnabled();
+    setNotificationsEnabledState(enabled);
+    const time = await getReminderTime();
+    setReminderTime(time);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadChild();
-    }, [loadChild])
+      loadData();
+    }, [loadData])
   );
+
+  const handleToggleNotifications = async (enabled: boolean) => {
+    setNotificationsEnabledState(enabled);
+    await setNotificationsEnabled(enabled);
+
+    if (enabled && child) {
+      await scheduleDailyReminder(child.name);
+    } else {
+      await cancelAllScheduledNotifications();
+    }
+  };
+
+  const handleTimeChange = async (event: any, selectedDate?: Date) => {
+    setShowTimePicker(Platform.OS === 'ios');
+
+    if (selectedDate && child) {
+      const newTime: ReminderTime = {
+        hour: selectedDate.getHours(),
+        minute: selectedDate.getMinutes(),
+      };
+      setReminderTime(newTime);
+      await saveReminderTime(newTime);
+
+      // Reschedule notification with new time
+      if (notificationsEnabled) {
+        await scheduleDailyReminder(child.name);
+      }
+    }
+  };
+
+  const getTimePickerDate = (): Date => {
+    const date = new Date();
+    date.setHours(reminderTime.hour, reminderTime.minute, 0, 0);
+    return date;
+  };
 
   const validateForm = (): boolean => {
     const newErrors: { name?: string; email?: string } = {};
@@ -243,7 +300,42 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Notifications</Text>
         <View style={styles.profileCard}>
-          <Text style={styles.hint}>Notification settings coming in Task C</Text>
+          <View style={styles.notificationRow}>
+            <View style={styles.notificationTextContainer}>
+              <Text style={styles.notificationLabel}>Daily Reminder</Text>
+              <Text style={styles.notificationHint}>
+                Get reminded to capture today's moment
+              </Text>
+            </View>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={handleToggleNotifications}
+              trackColor={{ false: '#ddd', true: '#34C759' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          {notificationsEnabled && (
+            <>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                style={styles.timeRow}
+                onPress={() => setShowTimePicker(true)}
+              >
+                <Text style={styles.timeLabel}>Reminder Time</Text>
+                <Text style={styles.timeValue}>{formatReminderTime(reminderTime)}</Text>
+              </TouchableOpacity>
+
+              {showTimePicker && (
+                <DateTimePicker
+                  value={getTimePickerDate()}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={handleTimeChange}
+                />
+              )}
+            </>
+          )}
         </View>
       </View>
     </ScrollView>
@@ -383,5 +475,46 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  notificationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  notificationTextContainer: {
+    flex: 1,
+    marginRight: 12,
+    backgroundColor: 'transparent',
+  },
+  notificationLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 2,
+  },
+  notificationHint: {
+    fontSize: 13,
+    color: '#999',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    marginVertical: 12,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  timeLabel: {
+    fontSize: 15,
+    color: '#666',
+  },
+  timeValue: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#007AFF',
   },
 });
