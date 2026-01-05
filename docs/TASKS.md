@@ -4,6 +4,26 @@ Use these prompts one-by-one with your AI coding agent. Commit after each task p
 
 ---
 
+## Agent Preamble (paste before EVERY task)
+
+```
+You are working in an Expo + React Native + TypeScript repo following `docs/SPEC.md` and `docs/TASKS.md`.
+
+**Hard rules:**
+
+* Implement ONLY what this task asks. Do not add "nice to haves."
+* Keep dependencies minimal; prefer Expo SDK / Expo Router idioms.
+* TypeScript everywhere; no `any` unless unavoidable.
+* No backend for MVP unless the task explicitly requires it.
+* No server-side storage of user content (text/photos/audio).
+* After implementing, output: (1) files changed (2) manual test steps (3) any known limitations.
+* Do not request or add any Gmail scope beyond `https://www.googleapis.com/auth/gmail.send` (Task D only).
+
+If you encounter a spec conflict, keep the smallest change that satisfies acceptance criteria and point out the conflict in the final notes.
+```
+
+---
+
 ## Pre-flight Checklist
 
 ```bash
@@ -16,93 +36,112 @@ git add . && git commit -m "feat: <task-name>"
 
 ---
 
-## Task A: Navigation + Local Child Profile
+## Sanity Checklist (run after each task)
+
+### General
+- [ ] App boots cleanly
+- [ ] No surprise new screens/features beyond task
+- [ ] TypeScript builds without errors (`npx tsc --noEmit`)
+- [ ] Only expected packages added
+
+### Task D Specific (Gmail OAuth)
+- [ ] Scope is exactly `https://www.googleapis.com/auth/gmail.send`
+- [ ] Uses PKCE (code challenge + verifier)
+- [ ] Testing in dev build, NOT Expo Go
+- [ ] Android: custom URI scheme enabled in Cloud Console if needed
+
+---
+
+## Task A: Navigation + Local Child Profile ✅
 
 **Branch:** `feat/child-profile`
 
 **Prompt for AI agent:**
 
-> Read `docs/SPEC.md`. Implement the onboarding flow and local persistence of a single Child Profile.
+> Read `docs/SPEC.md`. Implement onboarding + local persistence of a single `ChildProfile` using AsyncStorage.
 >
-> Requirements:
-> - Expo Router with tabs: (1) Compose (2) Settings
-> - Child Profile model: id (UUID), name, birthday, email, createdAt, isDefault
-> - Store in AsyncStorage
-> - Onboarding screen appears if no child profile exists
-> - Basic email format validation
-> - Settings screen shows current child info and allows editing
-> - TypeScript throughout
+> Must include:
+> - Expo Router Tabs: Compose + Settings
+> - On first launch with no profile: show onboarding (cannot access tabs until created)
+> - Basic email validation (format-level)
+> - Settings allows edit of name, birthday, email and persists
+> - `ChildProfile` matches spec (UUID id, createdAt, isDefault)
 >
-> Do NOT implement: Gmail auth, prompts, photo picker, notifications
+> Constraints:
+> - Keep UI minimal.
+> - Do NOT implement Gmail auth, prompts, photos, notifications, outbox.
+> - Create a small `services/storage.ts` wrapper and `types/index.ts`.
 >
-> After changes, tell me how to test manually with `npx expo start`.
+> Output: files changed + manual test steps using `npx expo start`.
 
 **Acceptance criteria:**
-- [ ] App boots without errors
-- [ ] First launch shows onboarding
-- [ ] Can create child profile with name, birthday, email
-- [ ] Profile persists across app restart
-- [ ] Settings screen shows and can edit profile
-- [ ] Invalid email shows error
+- [x] App boots without errors
+- [x] First launch shows onboarding
+- [x] Can create child profile with name, birthday, email
+- [x] Profile persists across app restart
+- [x] Settings screen shows and can edit profile
+- [x] Invalid email shows error
 
 ---
 
-## Task B: Compose Screen (Prompt + Text + Photo)
+## Task B: Compose Screen (Prompt + Text + Photo) ✅
 
 **Branch:** `feat/compose`
 
 **Prompt for AI agent:**
 
-> Read `docs/SPEC.md` and `docs/prompts.json`. Implement the Compose screen.
+> Read `docs/SPEC.md` and local prompts JSON. Implement Compose screen UX: prompt + text + photo + "mock send".
 >
-> Requirements:
-> - Daily prompt displayed at top of compose screen
-> - Prompt selection based on child's age (use ageBuckets from prompts.json)
-> - "Refresh" button cycles to next prompt in same age bucket
-> - Text input field (single line encouraged but allow multiline)
-> - Photo picker: camera and library options using expo-image-picker
-> - "Send" button that for now just console.logs the payload and shows success toast
-> - Calculate Day N from child's birthday
-> - Low floor: send button enabled if photo OR text exists
+> Must include:
+> - Age-bucket prompt selection (based on child age today)
+> - Refresh cycles within same bucket (persist "used prompts" locally)
+> - Text input
+> - Photo picker: camera + library using `expo-image-picker`
+> - Day number = days since birthday + 1 (Day 1 = birthday)
+> - Send enabled if text OR photo exists (photo-only counts)
+> - Send button logs payload + shows success feedback
 >
-> Do NOT implement: Gmail API, voice recording, actual email sending
+> Constraints:
+> - No Gmail API, no voice, no notifications, no outbox.
 >
-> After changes, provide manual test steps.
+> Output: files changed + manual test steps.
 
 **Acceptance criteria:**
-- [ ] Compose screen shows age-appropriate prompt
-- [ ] Refresh button shows new prompt
-- [ ] Can enter text
-- [ ] Can add photo from camera
-- [ ] Can add photo from library
-- [ ] Send button logs correct payload with Day N
-- [ ] Send works with photo-only (no text)
+- [x] Compose screen shows age-appropriate prompt
+- [x] Refresh button shows new prompt
+- [x] Can enter text
+- [x] Can add photo from camera
+- [x] Can add photo from library
+- [x] Send button logs correct payload with Day N
+- [x] Send works with photo-only (no text)
 
 ---
 
-## Task C: Notifications
+## Task C: Notifications ✅
 
 **Branch:** `feat/notifications`
 
 **Prompt for AI agent:**
 
-> Read `docs/SPEC.md`. Add daily local push notification scheduling.
+> Read `docs/SPEC.md`. Implement local daily notifications using `expo-notifications`.
 >
-> Requirements:
-> - Use expo-notifications
-> - Schedule daily notification at user-configured time (default 8:00 PM)
-> - Notification text: "Time to capture today's moment for {ChildName}"
-> - Settings screen: time picker for reminder
-> - Notification tap deep-links to Compose screen
-> - Request notification permissions in onboarding
+> Must include:
+> - Permission request during onboarding
+> - Default reminder time 8:00 PM
+> - Settings: reminder time picker
+> - Notification text includes child name
+> - Tap opens Compose route
 >
-> After changes, provide manual test steps (can test with shorter interval for dev).
+> Constraints:
+> - No backend, no Gmail, no outbox.
+>
+> Output: files changed + manual test steps (include dev-friendly short-interval testing method).
 
 **Acceptance criteria:**
-- [ ] Permission request works
-- [ ] Settings shows reminder time picker
-- [ ] Notification fires at scheduled time
-- [ ] Tapping notification opens Compose
+- [x] Permission request works
+- [x] Settings shows reminder time picker
+- [x] Notification fires at scheduled time
+- [x] Tapping notification opens Compose
 
 ---
 
@@ -110,25 +149,47 @@ git add . && git commit -m "feat: <task-name>"
 
 **Branch:** `feat/gmail`
 
+### Critical OAuth Gotchas
+
+**1. Expo Go CANNOT be used for OAuth:**
+OAuth flows won't work in Expo Go because you can't customize your app scheme. You MUST use a Development Build for proper redirects.
+- Docs: https://docs.expo.dev/guides/authentication/
+
+**2. Google blocks Android custom URI schemes by default:**
+For Android OAuth clients, custom URI scheme redirects are DISABLED by default. You must enable them in OAuth client Advanced Settings in Google Cloud Console, otherwise you'll get `invalid_request` errors.
+- Docs: https://developers.googleblog.com/improving-user-safety-in-oauth-flows-through-new-oauth-custom-uri-scheme-restrictions/
+
+**3. Use PKCE (no client_secret on mobile):**
+Google's installed-app flow uses PKCE. For Android/iOS native clients, `client_secret` is optional/not applicable.
+- Docs: https://developers.google.com/identity/protocols/oauth2/native-app
+
+---
+
 **Prompt for AI agent:**
 
-> Read `docs/SPEC.md`. Implement Gmail OAuth and email sending.
+> Read `docs/SPEC.md`. Implement Gmail OAuth (send-only scope) + sending email via Gmail API.
 >
-> Requirements:
-> - OAuth 2.0 with PKCE for native apps
-> - Request ONLY scope: `https://www.googleapis.com/auth/gmail.send`
-> - Use expo-auth-session for OAuth flow
-> - Store tokens securely (expo-secure-store)
-> - Implement token refresh
-> - Gmail API: `users.messages.send` with base64url RFC 2822 message
-> - Support text body + optional photo attachment (MIME multipart)
-> - Email format per SPEC.md (Subject: Day N — Date — ChildName)
-> - Settings: show "Connected as email@gmail.com ✓" or "Connect Gmail" button
-> - Handle send errors gracefully
+> Must include:
+> - OAuth authorization code flow with PKCE using `expo-auth-session`
+> - Use `WebBrowser.maybeCompleteAuthSession()`, `AuthSession.makeRedirectUri()`, and `useAuthRequest()` patterns
+> - Store tokens in `expo-secure-store`
+> - Refresh token handling
+> - Gmail API `users.messages.send` with base64url-encoded RFC 2822 MIME message (text + optional photo attachment)
+> - Subject/body formatting exactly per `SPEC.md`
+> - Settings shows "Connected as {email} ✓" + Connect/Disconnect button
+> - Graceful send errors
 >
-> Do NOT request: gmail.readonly, gmail.modify, or any other scope
+> **Critical constraints:**
+> - Scope must be ONLY `https://www.googleapis.com/auth/gmail.send`
+> - Do not request gmail.readonly/modify
+> - Assume we will test with an Expo Development Build (OAuth won't work in Expo Go)
+> - For Android: add Google Cloud setup notes explaining that custom URI scheme redirects are disabled by default and must be enabled under OAuth client Advanced settings
+> - Use PKCE code challenge + verifier per Google installed-app flow
 >
-> Note: You'll need to create a Google Cloud project and OAuth client ID (type: iOS/Android). Provide setup instructions.
+> Output:
+> - Step-by-step Google Cloud + Expo config instructions
+> - Files changed
+> - Manual test steps (including how to confirm an email arrives)
 
 **Acceptance criteria:**
 - [ ] OAuth flow completes without errors
@@ -147,19 +208,20 @@ git add . && git commit -m "feat: <task-name>"
 
 **Prompt for AI agent:**
 
-> Read `docs/SPEC.md`. Implement offline outbox queue for reliability.
+> Read `docs/SPEC.md`. Implement offline outbox queue for failed sends.
 >
-> Requirements:
-> - On send failure (network error, API error): store entry locally
-> - CapsuleEntry model per SPEC.md: id, childId, text, photoUris, status, errorMessage, dayNumber
-> - Background retry when app opens + network available
-> - New Outbox screen (add to navigation)
-> - Outbox shows pending items with retry button
-> - Show "Queued ✓" feedback on send failure
-> - Remove from outbox only after successful send
-> - Handle photo URIs that may have expired (re-pick or show warning)
+> Must include:
+> - `CapsuleEntry` model per spec; persist locally
+> - On send failure: queue + show "Queued ✓"
+> - Outbox screen + manual retry
+> - Auto retry on app open when network available
+> - Remove item only after confirmed send success
+> - Handle expired photo URIs (warn + allow re-pick)
 >
-> After changes, provide test steps (can test by disabling network).
+> Constraints:
+> - Do not add a feed/timeline.
+>
+> Output: files changed + manual test steps (include airplane-mode test).
 
 **Acceptance criteria:**
 - [ ] Send failure queues to outbox (not lost)
