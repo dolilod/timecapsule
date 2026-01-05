@@ -51,7 +51,7 @@ export default function OnboardingScreen() {
         birthday: birthday.toISOString(),
       });
 
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/compose');
     } catch (error) {
       Alert.alert('Error', 'Failed to save profile. Please try again.');
       console.error('Error saving profile:', error);

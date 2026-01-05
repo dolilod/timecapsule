@@ -1,0 +1,262 @@
+{
+  "version": "1.0",
+  "prompts": [
+    {
+      "id": 1,
+      "ageBucket": "0-12mo",
+      "text": "Take a photo of their hands today."
+    },
+    {
+      "id": 2,
+      "ageBucket": "0-12mo",
+      "text": "What made them smile today? (1 sentence)"
+    },
+    {
+      "id": 3,
+      "ageBucket": "0-12mo",
+      "text": "Record 3 seconds of the sounds they make right now."
+    },
+    {
+      "id": 4,
+      "ageBucket": "0-12mo",
+      "text": "What's a new thing they noticed today?"
+    },
+    {
+      "id": 5,
+      "ageBucket": "0-12mo",
+      "text": "Take a photo of where they fell asleep."
+    },
+    {
+      "id": 6,
+      "ageBucket": "0-12mo",
+      "text": "What's something you're worried about—and something you're proud of?"
+    },
+    {
+      "id": 7,
+      "ageBucket": "0-12mo",
+      "text": "\"Today you smelled like…\""
+    },
+    {
+      "id": 8,
+      "ageBucket": "0-12mo",
+      "text": "Take a photo of your view while feeding them."
+    },
+    {
+      "id": 9,
+      "ageBucket": "0-12mo",
+      "text": "What's a tiny milestone you'd forget by next week?"
+    },
+    {
+      "id": 10,
+      "ageBucket": "0-12mo",
+      "text": "Say one thing you hope they keep forever."
+    },
+    {
+      "id": 11,
+      "ageBucket": "1-3yr",
+      "text": "Take a photo of the mess they made today."
+    },
+    {
+      "id": 12,
+      "ageBucket": "1-3yr",
+      "text": "What word/phrase did they say that surprised you?"
+    },
+    {
+      "id": 13,
+      "ageBucket": "1-3yr",
+      "text": "What did they insist on doing \"by myself\" today?"
+    },
+    {
+      "id": 14,
+      "ageBucket": "1-3yr",
+      "text": "Take a photo of their favorite object right now."
+    },
+    {
+      "id": 15,
+      "ageBucket": "1-3yr",
+      "text": "What made them laugh the hardest today?"
+    },
+    {
+      "id": 16,
+      "ageBucket": "1-3yr",
+      "text": "Record them saying a word (or you imitating it)."
+    },
+    {
+      "id": 17,
+      "ageBucket": "1-3yr",
+      "text": "What did they get stubborn about today? (No judgment—just facts.)"
+    },
+    {
+      "id": 18,
+      "ageBucket": "1-3yr",
+      "text": "Take a photo of their shoes after a full day."
+    },
+    {
+      "id": 19,
+      "ageBucket": "1-3yr",
+      "text": "What's something they're learning to love?"
+    },
+    {
+      "id": 20,
+      "ageBucket": "1-3yr",
+      "text": "Write a 1-sentence \"scene\" from today (like a movie shot)."
+    },
+    {
+      "id": 21,
+      "ageBucket": "3-5yr",
+      "text": "What did they pretend today?"
+    },
+    {
+      "id": 22,
+      "ageBucket": "3-5yr",
+      "text": "Take a photo of their drawing/creation."
+    },
+    {
+      "id": 23,
+      "ageBucket": "3-5yr",
+      "text": "What question did they ask that made you pause?"
+    },
+    {
+      "id": 24,
+      "ageBucket": "3-5yr",
+      "text": "What did they do that felt very \"them\"?"
+    },
+    {
+      "id": 25,
+      "ageBucket": "3-5yr",
+      "text": "Take a photo of their dinner plate (before/after)."
+    },
+    {
+      "id": 26,
+      "ageBucket": "3-5yr",
+      "text": "What's a new friendship forming?"
+    },
+    {
+      "id": 27,
+      "ageBucket": "3-5yr",
+      "text": "Record a 5-second \"bedtime voice note\" to future them."
+    },
+    {
+      "id": 28,
+      "ageBucket": "3-5yr",
+      "text": "What are they afraid of lately? What helps?"
+    },
+    {
+      "id": 29,
+      "ageBucket": "3-5yr",
+      "text": "What's a routine you secretly love?"
+    },
+    {
+      "id": 30,
+      "ageBucket": "3-5yr",
+      "text": "If today had a title, what would it be?"
+    },
+    {
+      "id": 31,
+      "ageBucket": "5-10yr",
+      "text": "What did they practice today (even if they complained)?"
+    },
+    {
+      "id": 32,
+      "ageBucket": "5-10yr",
+      "text": "Take a photo of something they're into this week (book, toy, sport)."
+    },
+    {
+      "id": 33,
+      "ageBucket": "5-10yr",
+      "text": "What did they say that sounded older than their age?"
+    },
+    {
+      "id": 34,
+      "ageBucket": "5-10yr",
+      "text": "What's a small kindness you saw them do?"
+    },
+    {
+      "id": 35,
+      "ageBucket": "5-10yr",
+      "text": "What are they currently obsessed with—and why do you think it clicks?"
+    },
+    {
+      "id": 36,
+      "ageBucket": "5-10yr",
+      "text": "Record: \"One thing I admire about you is…\" (10 seconds)"
+    },
+    {
+      "id": 37,
+      "ageBucket": "5-10yr",
+      "text": "What challenge did they face today and how did they respond?"
+    },
+    {
+      "id": 38,
+      "ageBucket": "5-10yr",
+      "text": "Take a photo of their backpack / desk / \"kid workspace.\""
+    },
+    {
+      "id": 39,
+      "ageBucket": "5-10yr",
+      "text": "What made you proud today (no grades)?"
+    },
+    {
+      "id": 40,
+      "ageBucket": "5-10yr",
+      "text": "Write a note to their 18-year-old self about who they are right now."
+    },
+    {
+      "id": 41,
+      "ageBucket": "10-18yr",
+      "text": "What music are they into right now?"
+    },
+    {
+      "id": 42,
+      "ageBucket": "10-18yr",
+      "text": "What's a value you hope they learn by watching you?"
+    },
+    {
+      "id": 43,
+      "ageBucket": "10-18yr",
+      "text": "What's something you disagree about lately—and what's actually underneath it?"
+    },
+    {
+      "id": 44,
+      "ageBucket": "10-18yr",
+      "text": "Take a photo of a mundane moment you'll miss (car ride, kitchen)."
+    },
+    {
+      "id": 45,
+      "ageBucket": "10-18yr",
+      "text": "What's a risk they took today (social/creative/academic)?"
+    },
+    {
+      "id": 46,
+      "ageBucket": "10-18yr",
+      "text": "Write: \"Here's what I wish I could explain perfectly…\""
+    },
+    {
+      "id": 47,
+      "ageBucket": "10-18yr",
+      "text": "Record: \"If you ever feel alone, remember…\" (10–20 sec)"
+    },
+    {
+      "id": 48,
+      "ageBucket": "10-18yr",
+      "text": "What's a boundary they set (or needed to set) today?"
+    },
+    {
+      "id": 49,
+      "ageBucket": "10-18yr",
+      "text": "What's changing in them this year that you want to honor?"
+    },
+    {
+      "id": 50,
+      "ageBucket": "10-18yr",
+      "text": "Write a thank-you note to them for something specific."
+    }
+  ],
+  "ageBuckets": [
+    {"id": "0-12mo", "label": "0-12 months", "minDays": 0, "maxDays": 365},
+    {"id": "1-3yr", "label": "1-3 years", "minDays": 366, "maxDays": 1095},
+    {"id": "3-5yr", "label": "3-5 years", "minDays": 1096, "maxDays": 1825},
+    {"id": "5-10yr", "label": "5-10 years", "minDays": 1826, "maxDays": 3650},
+    {"id": "10-18yr", "label": "10-18 years", "minDays": 3651, "maxDays": 6570}
+  ]
+}

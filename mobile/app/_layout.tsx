@@ -65,7 +65,7 @@ function RootLayoutNav() {
     if (!isOnboardingComplete && !inOnboarding) {
       router.replace('/onboarding');
     } else if (isOnboardingComplete && inOnboarding) {
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/compose');
     }
   }, [isOnboardingComplete, segments]);
 
