@@ -7,11 +7,16 @@ import {
   Alert,
   Platform,
   Switch,
+  View,
+  Text,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-import { Text, View } from '@/components/Themed';
+import { useTheme } from '@/hooks/useTheme';
+import { Card, Button, Banner, useToast } from '@/components/ui';
+import { useNetwork } from '@/hooks/useNetwork';
 import {
   getDefaultChild,
   updateChildProfile,
@@ -28,6 +33,7 @@ import {
   cancelAllScheduledNotifications,
   formatReminderTime,
   ReminderTime,
+  formatNextReminder,
 } from '@/services/notifications';
 import {
   isGmailConnected,
@@ -41,17 +47,19 @@ import * as AuthSession from 'expo-auth-session';
 import { ChildProfile } from '@/types';
 import { toDateOnlyString, fromDateOnlyString } from '@/services/date';
 
-// Google OAuth discovery document
 const discovery = {
   authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
   tokenEndpoint: 'https://oauth2.googleapis.com/token',
   revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
 };
 
-// Gmail send scope
 const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.send';
 
 export default function SettingsScreen() {
+  const { colors, typography, spacing, componentRadius } = useTheme();
+  const { isOnline } = useNetwork();
+  const toast = useToast();
+
   const [child, setChild] = useState<ChildProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
@@ -61,17 +69,14 @@ export default function SettingsScreen() {
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // Notification state
   const [notificationsEnabled, setNotificationsEnabledState] = useState(false);
   const [reminderTime, setReminderTime] = useState<ReminderTime>({ hour: 20, minute: 0 });
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  // Gmail state
   const [gmailConnected, setGmailConnected] = useState(false);
   const [gmailEmail, setGmailEmail] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Use the useAuthRequest hook for proper OAuth handling in native apps
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
       clientId: getClientId(),
@@ -95,13 +100,11 @@ export default function SettingsScreen() {
       setEditBirthday(fromDateOnlyString(defaultChild.birthday));
     }
 
-    // Load notification settings
     const enabled = await areNotificationsEnabled();
     setNotificationsEnabledState(enabled);
     const time = await getReminderTime();
     setReminderTime(time);
 
-    // Load Gmail connection status
     const connected = await isGmailConnected();
     setGmailConnected(connected);
     if (connected) {
@@ -116,48 +119,31 @@ export default function SettingsScreen() {
     }, [loadData])
   );
 
-  // Handle OAuth response using useEffect (this is the key pattern for native apps)
   React.useEffect(() => {
     const handleAuthResponse = async () => {
-      console.log('Auth response changed:', response?.type);
-      console.log('Auth response full:', JSON.stringify(response, null, 2));
-
       if (response?.type === 'success') {
         const code = response.params?.code;
-        console.log('Got auth code:', code ? 'yes' : 'no');
-        console.log('Request code verifier:', request?.codeVerifier ? 'present' : 'missing');
-
         if (code && request?.codeVerifier) {
           setIsConnecting(true);
           try {
-            console.log('Exchanging code for tokens...');
             const tokens = await exchangeCodeForTokens(code, request.codeVerifier);
-            console.log('Token exchange result:', tokens ? 'success' : 'failed');
-
             if (tokens) {
               setGmailConnected(true);
               setGmailEmail(tokens.userEmail);
               Alert.alert('Success', `Gmail connected as ${tokens.userEmail}`);
             } else {
-              Alert.alert('Error', 'Failed to exchange tokens. Check console for details.');
+              Alert.alert('Error', 'Failed to exchange tokens.');
             }
           } catch (error) {
-            console.error('Error in token exchange:', error);
             Alert.alert('Error', 'Failed to connect Gmail.');
           } finally {
             setIsConnecting(false);
           }
-        } else {
-          console.log('Missing code or code verifier');
-          if (!code) console.log('No code in params');
-          if (!request?.codeVerifier) console.log('No code verifier in request');
         }
       } else if (response?.type === 'error') {
-        console.log('Auth error:', response.error);
         Alert.alert('Error', response.error?.message || 'Authentication failed.');
         setIsConnecting(false);
       } else if (response?.type === 'dismiss') {
-        console.log('Auth dismissed by user');
         setIsConnecting(false);
       }
     };
@@ -189,7 +175,6 @@ export default function SettingsScreen() {
       setReminderTime(newTime);
       await saveReminderTime(newTime);
 
-      // Reschedule notification with new time
       if (notificationsEnabled) {
         await scheduleDailyReminder(child.name);
       }
@@ -210,15 +195,8 @@ export default function SettingsScreen() {
 
     setIsConnecting(true);
     try {
-      // Log redirect URI and code verifier for debugging
-      console.log('Starting OAuth with redirect URI:', getRedirectUri());
-      console.log('Code verifier available:', !!request.codeVerifier);
-      console.log('Request ready:', !!request);
-
-      // promptAsync will trigger the response via the useEffect hook
       await promptAsync();
     } catch (error) {
-      console.error('Error starting OAuth:', error);
       Alert.alert('Error', 'Failed to start Gmail authentication.');
       setIsConnecting(false);
     }
@@ -274,11 +252,10 @@ export default function SettingsScreen() {
       if (updated) {
         setChild(updated);
         setIsEditing(false);
-        Alert.alert('Success', 'Profile updated successfully');
+        toast.success('Profile updated');
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to update profile. Please try again.');
-      console.error('Error updating profile:', error);
     } finally {
       setIsSaving(false);
     }
@@ -304,52 +281,98 @@ export default function SettingsScreen() {
 
   if (!child) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.loading}>Loading...</Text>
+      <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+        <Text style={[typography.styles.body, { color: colors.text.secondary, textAlign: 'center', marginTop: 100 }]}>
+          Loading...
+        </Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background.primary }]}
+      contentContainerStyle={styles.content}
+    >
+      {!isOnline && (
+        <Banner variant="warning" message="You’re offline — changes will be saved locally" style={{ marginBottom: spacing[3] }} />
+      )}
+      {/* Child Profile Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Child Profile</Text>
+          <Text style={[typography.styles.h3, { color: colors.text.primary }]}>
+            Child Profile
+          </Text>
           {!isEditing && (
             <TouchableOpacity onPress={() => setIsEditing(true)}>
-              <Text style={styles.editButton}>Edit</Text>
+              <Text style={[typography.styles.button, { color: colors.interactive.primary }]}>
+                Edit
+              </Text>
             </TouchableOpacity>
           )}
         </View>
 
         {isEditing ? (
           <View style={styles.form}>
+            {/* Name Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Name</Text>
+              <Text style={[typography.styles.label, { color: colors.text.primary, marginBottom: spacing[2] }]}>
+                Name
+              </Text>
               <TextInput
-                style={[styles.input, errors.name && styles.inputError]}
+                style={[
+                  styles.input,
+                  typography.styles.bodyLarge,
+                  {
+                    backgroundColor: colors.background.primary,
+                    borderColor: errors.name ? colors.status.error : colors.border.DEFAULT,
+                    borderRadius: componentRadius.input,
+                    color: colors.text.primary,
+                  },
+                ]}
                 value={editName}
                 onChangeText={(text) => {
                   setEditName(text);
                   if (errors.name) setErrors((e) => ({ ...e, name: undefined }));
                 }}
                 placeholder="Enter name"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.text.tertiary}
                 autoCapitalize="words"
               />
-              {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+              {errors.name && (
+                <Text style={[typography.styles.bodySmall, { color: colors.status.error, marginTop: spacing[1] }]}>
+                  {errors.name}
+                </Text>
+              )}
             </View>
 
+            {/* Birthday Picker */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Birthday</Text>
+              <Text style={[typography.styles.label, { color: colors.text.primary, marginBottom: spacing[2] }]}>
+                Birthday
+              </Text>
               <TouchableOpacity
-                style={styles.dateButton}
+                style={[
+                  styles.dateButton,
+                  {
+                    backgroundColor: colors.background.primary,
+                    borderColor: colors.border.DEFAULT,
+                    borderRadius: componentRadius.input,
+                  },
+                ]}
                 onPress={() => setShowDatePicker(true)}
               >
-                <Text style={styles.dateButtonText}>{formatDate(editBirthday)}</Text>
+                <Text style={[typography.styles.bodyLarge, { color: colors.text.primary }]}>
+                  {formatDate(editBirthday)}
+                </Text>
               </TouchableOpacity>
               {showDatePicker && (
-                <View style={styles.datePickerContainer}>
+                <View
+                  style={[
+                    styles.datePickerContainer,
+                    { backgroundColor: colors.card.backgroundAlt, borderRadius: componentRadius.card },
+                  ]}
+                >
                   <DateTimePicker
                     value={editBirthday}
                     mode="date"
@@ -366,147 +389,184 @@ export default function SettingsScreen() {
                   />
                   {Platform.OS === 'ios' && (
                     <TouchableOpacity
-                      style={styles.datePickerDone}
+                      style={[styles.datePickerDone, { backgroundColor: colors.interactive.primary }]}
                       onPress={() => setShowDatePicker(false)}
                     >
-                      <Text style={styles.datePickerDoneText}>Done</Text>
+                      <Text style={[typography.styles.button, { color: colors.text.inverse }]}>Done</Text>
                     </TouchableOpacity>
                   )}
                 </View>
               )}
             </View>
 
+            {/* Email Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={[typography.styles.label, { color: colors.text.primary, marginBottom: spacing[2] }]}>
+                Email
+              </Text>
               <TextInput
-                style={[styles.input, errors.email && styles.inputError]}
+                style={[
+                  styles.input,
+                  typography.styles.bodyLarge,
+                  {
+                    backgroundColor: colors.background.primary,
+                    borderColor: errors.email ? colors.status.error : colors.border.DEFAULT,
+                    borderRadius: componentRadius.input,
+                    color: colors.text.primary,
+                  },
+                ]}
                 value={editEmail}
                 onChangeText={(text) => {
                   setEditEmail(text);
                   if (errors.email) setErrors((e) => ({ ...e, email: undefined }));
                 }}
                 placeholder="child@gmail.com"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.text.tertiary}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
-              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+              {errors.email && (
+                <Text style={[typography.styles.bodySmall, { color: colors.status.error, marginTop: spacing[1] }]}>
+                  {errors.email}
+                </Text>
+              )}
             </View>
 
+            {/* Action Buttons */}
             <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={handleCancel}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.saveButton, isSaving && styles.buttonDisabled]}
+              <Button title="Cancel" onPress={handleCancel} variant="secondary" style={{ flex: 1 }} />
+              <Button
+                title={isSaving ? 'Saving...' : 'Save'}
                 onPress={handleSave}
                 disabled={isSaving}
-              >
-                <Text style={styles.saveButtonText}>
-                  {isSaving ? 'Saving...' : 'Save'}
-                </Text>
-              </TouchableOpacity>
+                loading={isSaving}
+                style={{ flex: 1 }}
+              />
             </View>
           </View>
         ) : (
-          <View style={styles.profileCard}>
-            <View style={styles.profileRow}>
-              <Text style={styles.profileLabel}>Name</Text>
-              <Text style={styles.profileValue}>{child.name}</Text>
+          <Card variant="default">
+            <View style={[styles.profileRow, { borderBottomColor: colors.border.light }]}>
+              <Text style={[typography.styles.body, { color: colors.text.secondary }]}>Name</Text>
+              <Text style={[typography.styles.body, { color: colors.text.primary, fontWeight: '500' }]}>
+                {child.name}
+              </Text>
             </View>
-            <View style={styles.profileRow}>
-              <Text style={styles.profileLabel}>Birthday</Text>
-              <Text style={styles.profileValue}>
+            <View style={[styles.profileRow, { borderBottomColor: colors.border.light }]}>
+              <Text style={[typography.styles.body, { color: colors.text.secondary }]}>Birthday</Text>
+              <Text style={[typography.styles.body, { color: colors.text.primary, fontWeight: '500' }]}>
                 {formatDate(new Date(child.birthday))}
               </Text>
             </View>
-            <View style={styles.profileRow}>
-              <Text style={styles.profileLabel}>Age</Text>
-              <Text style={styles.profileValue}>{calculateAge(child.birthday)}</Text>
+            <View style={[styles.profileRow, { borderBottomColor: colors.border.light }]}>
+              <Text style={[typography.styles.body, { color: colors.text.secondary }]}>Age</Text>
+              <Text style={[typography.styles.body, { color: colors.text.primary, fontWeight: '500' }]}>
+                {calculateAge(child.birthday)}
+              </Text>
             </View>
-            <View style={styles.profileRow}>
-              <Text style={styles.profileLabel}>Day</Text>
-              <Text style={styles.profileValue}>
+            <View style={[styles.profileRow, { borderBottomColor: colors.border.light }]}>
+              <Text style={[typography.styles.body, { color: colors.text.secondary }]}>Day</Text>
+              <Text style={[typography.styles.body, { color: colors.text.primary, fontWeight: '500' }]}>
                 Day {calculateDayNumber(child.birthday)}
               </Text>
             </View>
-            <View style={styles.profileRow}>
-              <Text style={styles.profileLabel}>Email</Text>
-              <Text style={styles.profileValue}>{child.email}</Text>
+            <View style={[styles.profileRow, { borderBottomWidth: 0 }]}>
+              <Text style={[typography.styles.body, { color: colors.text.secondary }]}>Email</Text>
+              <Text style={[typography.styles.body, { color: colors.text.primary, fontWeight: '500' }]}>
+                {child.email}
+              </Text>
             </View>
-          </View>
+          </Card>
         )}
       </View>
 
+      {/* Gmail Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Gmail</Text>
-        <View style={styles.profileCard}>
+        <Text style={[typography.styles.h3, { color: colors.text.primary, marginBottom: spacing[3] }]}>
+          Gmail
+        </Text>
+        <Card variant="default">
           {gmailConnected ? (
-            <>
-              <View style={styles.gmailConnectedRow}>
-                <View style={styles.gmailConnectedInfo}>
-                  <Text style={styles.gmailConnectedLabel}>Connected</Text>
-                  <Text style={styles.gmailEmail}>{gmailEmail}</Text>
+            <View style={styles.gmailConnectedRow}>
+              <View style={{ flex: 1 }}>
+                <View style={styles.gmailStatusRow}>
+                  <View style={[styles.statusDot, { backgroundColor: colors.status.success }]} />
+                  <Text style={[typography.styles.label, { color: colors.status.success }]}>
+                    Connected
+                  </Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.disconnectButton}
-                  onPress={handleDisconnectGmail}
-                >
-                  <Text style={styles.disconnectButtonText}>Disconnect</Text>
-                </TouchableOpacity>
+                <Text style={[typography.styles.bodySmall, { color: colors.text.secondary, marginTop: spacing[1] }]}>
+                  {gmailEmail}
+                </Text>
               </View>
-            </>
+              <Button
+                title="Disconnect"
+                onPress={handleDisconnectGmail}
+                variant="ghost"
+                size="sm"
+              />
+            </View>
           ) : (
             <>
-              <Text style={styles.notConnected}>Not connected</Text>
-              <Text style={styles.hint}>
+              <Text style={[typography.styles.label, { color: colors.status.warning }]}>
+                Not connected
+              </Text>
+              <Text style={[typography.styles.bodySmall, { color: colors.text.tertiary, marginTop: spacing[1] }]}>
                 Connect your Gmail to send memories to your child's email
               </Text>
-              <TouchableOpacity
-                style={[styles.connectButton, (isConnecting || !request) && styles.buttonDisabled]}
-                onPress={handleConnectGmail}
-                disabled={isConnecting || !request}
-              >
-                <Text style={styles.connectButtonText}>
-                  {isConnecting ? 'Connecting...' : !request ? 'Loading...' : 'Connect Gmail'}
-                </Text>
-              </TouchableOpacity>
+              <View style={{ marginTop: spacing[3] }}>
+                <Button
+                  title={isConnecting ? 'Connecting...' : !request ? 'Loading...' : 'Connect Gmail'}
+                  onPress={handleConnectGmail}
+                  disabled={isConnecting || !request}
+                  loading={isConnecting}
+                  icon={<FontAwesome name="google" size={16} color={colors.text.inverse} />}
+                  iconPosition="left"
+                />
+              </View>
             </>
           )}
-        </View>
+        </Card>
       </View>
 
+      {/* Notifications Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
-        <View style={styles.profileCard}>
+        <Text style={[typography.styles.h3, { color: colors.text.primary, marginBottom: spacing[3] }]}>
+          Notifications
+        </Text>
+        <Card variant="default">
           <View style={styles.notificationRow}>
-            <View style={styles.notificationTextContainer}>
-              <Text style={styles.notificationLabel}>Daily Reminder</Text>
-              <Text style={styles.notificationHint}>
+            <View style={{ flex: 1, marginRight: spacing[3] }}>
+              <Text style={[typography.styles.body, { color: colors.text.primary, fontWeight: '500' }]}>
+                Daily Reminder
+              </Text>
+              <Text style={[typography.styles.bodySmall, { color: colors.text.tertiary, marginTop: spacing[1] }]}>
                 Get reminded to capture today's moment
               </Text>
             </View>
             <Switch
               value={notificationsEnabled}
               onValueChange={handleToggleNotifications}
-              trackColor={{ false: '#ddd', true: '#34C759' }}
-              thumbColor="#fff"
+              trackColor={{ false: colors.border.DEFAULT, true: colors.status.success }}
+              thumbColor={colors.background.primary}
             />
           </View>
 
           {notificationsEnabled && (
             <>
-              <View style={styles.divider} />
-              <TouchableOpacity
-                style={styles.timeRow}
-                onPress={() => setShowTimePicker(true)}
-              >
-                <Text style={styles.timeLabel}>Reminder Time</Text>
-                <Text style={styles.timeValue}>{formatReminderTime(reminderTime)}</Text>
+              <View style={[styles.divider, { backgroundColor: colors.border.light }]} />
+              <TouchableOpacity style={styles.timeRow} onPress={() => setShowTimePicker(true)}>
+                <Text style={[typography.styles.body, { color: colors.text.secondary }]}>
+                  Reminder Time
+                </Text>
+                <Text style={[typography.styles.body, { color: colors.interactive.primary, fontWeight: '500' }]}>
+                  {formatReminderTime(reminderTime)}
+                </Text>
               </TouchableOpacity>
+
+              <Text style={[typography.styles.bodySmall, { color: colors.text.tertiary, marginTop: spacing[1], marginHorizontal: 16 }]}>
+                Next reminder: {formatNextReminder(reminderTime)}
+              </Text>
 
               {showTimePicker && (
                 <DateTimePicker
@@ -518,7 +578,7 @@ export default function SettingsScreen() {
               )}
             </>
           )}
-        </View>
+        </Card>
       </View>
     </ScrollView>
   );
@@ -531,231 +591,73 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
-  loading: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 100,
-  },
   section: {
     marginBottom: 32,
-    backgroundColor: 'transparent',
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
-    backgroundColor: 'transparent',
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  editButton: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  profileCard: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
-    padding: 16,
-  },
-  profileRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    backgroundColor: 'transparent',
-  },
-  profileLabel: {
-    fontSize: 15,
-    color: '#666',
-  },
-  profileValue: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#333',
-  },
-  notConnected: {
-    fontSize: 15,
-    color: '#ff9500',
-    marginBottom: 4,
-  },
-  hint: {
-    fontSize: 13,
-    color: '#999',
-  },
-  form: {
-    backgroundColor: 'transparent',
-  },
+  form: {},
   inputGroup: {
     marginBottom: 16,
-    backgroundColor: 'transparent',
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
     padding: 14,
-    fontSize: 16,
-    backgroundColor: '#fff',
-    color: '#000',
-  },
-  inputError: {
-    borderColor: '#ff4444',
-  },
-  errorText: {
-    color: '#ff4444',
-    fontSize: 12,
-    marginTop: 4,
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
     padding: 14,
-    backgroundColor: '#fff',
-  },
-  dateButtonText: {
-    fontSize: 16,
-    color: '#000',
   },
   datePickerContainer: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
     marginTop: 8,
     overflow: 'hidden',
   },
   datePickerDone: {
-    backgroundColor: '#007AFF',
     padding: 12,
     alignItems: 'center',
-  },
-  datePickerDoneText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   buttonRow: {
     flexDirection: 'row',
     gap: 12,
     marginTop: 8,
-    backgroundColor: 'transparent',
   },
-  button: {
-    flex: 1,
-    borderRadius: 10,
-    padding: 14,
+  profileRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  gmailConnectedRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  cancelButton: {
-    backgroundColor: '#e0e0e0',
+  gmailStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  cancelButtonText: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  saveButton: {
-    backgroundColor: '#007AFF',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   notificationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  notificationTextContainer: {
-    flex: 1,
-    marginRight: 12,
-    backgroundColor: 'transparent',
-  },
-  notificationLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 2,
-  },
-  notificationHint: {
-    fontSize: 13,
-    color: '#999',
   },
   divider: {
     height: 1,
-    backgroundColor: '#e0e0e0',
     marginVertical: 12,
   },
   timeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  timeLabel: {
-    fontSize: 15,
-    color: '#666',
-  },
-  timeValue: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#007AFF',
-  },
-  gmailConnectedRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  gmailConnectedInfo: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  gmailConnectedLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#34C759',
-    marginBottom: 2,
-  },
-  gmailEmail: {
-    fontSize: 14,
-    color: '#666',
-  },
-  disconnectButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: '#f5f5f5',
-  },
-  disconnectButtonText: {
-    fontSize: 14,
-    color: '#ff3b30',
-    fontWeight: '500',
-  },
-  connectButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 10,
-    padding: 14,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  connectButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

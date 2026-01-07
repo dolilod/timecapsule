@@ -7,17 +7,23 @@ import {
   Platform,
   ScrollView,
   Alert,
+  View,
+  Text,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-import { Text, View } from '@/components/Themed';
+import { useTheme } from '@/hooks/useTheme';
+import { Button } from '@/components/ui';
 import { saveChildProfile, isValidEmail } from '@/services/storage';
 import { scheduleDailyReminder } from '@/services/notifications';
 import { toDateOnlyString } from '@/services/date';
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { colors, typography, spacing, componentRadius } = useTheme();
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [birthday, setBirthday] = useState(new Date());
@@ -54,9 +60,7 @@ export default function OnboardingScreen() {
         birthday: toDateOnlyString(birthday),
       });
 
-      // Schedule daily reminder notification
       await scheduleDailyReminder(childName);
-
       router.replace('/(tabs)/compose');
     } catch (error) {
       Alert.alert('Error', 'Failed to save profile. Please try again.');
@@ -76,50 +80,125 @@ export default function OnboardingScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background.primary }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Header with Icon */}
         <View style={styles.header}>
-          <Text style={styles.title}>Time Capsule</Text>
-          <Text style={styles.subtitle}>
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: colors.prompt.background },
+            ]}
+          >
+            <FontAwesome name="gift" size={40} color={colors.interactive.primary} />
+          </View>
+          <Text style={[typography.styles.displayMedium, { color: colors.text.primary }]}>
+            Time Capsule
+          </Text>
+          <Text
+            style={[
+              typography.styles.body,
+              { color: colors.text.secondary, marginTop: spacing[2], textAlign: 'center' },
+            ]}
+          >
             Create daily memories for your child to open at 18
           </Text>
         </View>
 
+        {/* Form */}
         <View style={styles.form}>
-          <Text style={styles.sectionTitle}>Add Your Child</Text>
+          <Text
+            style={[
+              typography.styles.h2,
+              { color: colors.text.primary, marginBottom: spacing[6] },
+            ]}
+          >
+            Add Your Child
+          </Text>
 
+          {/* Name Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Child's Name</Text>
+            <Text
+              style={[
+                typography.styles.label,
+                { color: colors.text.primary, marginBottom: spacing[2] },
+              ]}
+            >
+              Child's Name
+            </Text>
             <TextInput
-              style={[styles.input, errors.name && styles.inputError]}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.background.primary,
+                  borderColor: errors.name ? colors.status.error : colors.border.DEFAULT,
+                  borderRadius: componentRadius.input,
+                  color: colors.text.primary,
+                },
+                typography.styles.bodyLarge,
+              ]}
               value={name}
               onChangeText={(text) => {
                 setName(text);
                 if (errors.name) setErrors((e) => ({ ...e, name: undefined }));
               }}
               placeholder="Enter name"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.text.tertiary}
               autoCapitalize="words"
               autoCorrect={false}
             />
-            {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+            {errors.name && (
+              <Text
+                style={[
+                  typography.styles.bodySmall,
+                  { color: colors.status.error, marginTop: spacing[1] },
+                ]}
+              >
+                {errors.name}
+              </Text>
+            )}
           </View>
 
+          {/* Birthday Picker */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Birthday</Text>
+            <Text
+              style={[
+                typography.styles.label,
+                { color: colors.text.primary, marginBottom: spacing[2] },
+              ]}
+            >
+              Birthday
+            </Text>
             <TouchableOpacity
-              style={styles.dateButton}
+              style={[
+                styles.dateButton,
+                {
+                  backgroundColor: colors.background.primary,
+                  borderColor: colors.border.DEFAULT,
+                  borderRadius: componentRadius.input,
+                },
+              ]}
               onPress={() => setShowDatePicker(true)}
             >
-              <Text style={styles.dateButtonText}>{formatDate(birthday)}</Text>
+              <Text style={[typography.styles.bodyLarge, { color: colors.text.primary }]}>
+                {formatDate(birthday)}
+              </Text>
             </TouchableOpacity>
             {showDatePicker && (
-              <View style={styles.datePickerContainer}>
+              <View
+                style={[
+                  styles.datePickerContainer,
+                  {
+                    backgroundColor: colors.card.backgroundAlt,
+                    borderRadius: componentRadius.card,
+                  },
+                ]}
+              >
                 <DateTimePicker
                   value={birthday}
                   mode="date"
@@ -136,46 +215,86 @@ export default function OnboardingScreen() {
                 />
                 {Platform.OS === 'ios' && (
                   <TouchableOpacity
-                    style={styles.datePickerDone}
+                    style={[
+                      styles.datePickerDone,
+                      { backgroundColor: colors.interactive.primary },
+                    ]}
                     onPress={() => setShowDatePicker(false)}
                   >
-                    <Text style={styles.datePickerDoneText}>Done</Text>
+                    <Text
+                      style={[typography.styles.button, { color: colors.text.inverse }]}
+                    >
+                      Done
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
             )}
           </View>
 
+          {/* Email Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Child's Email Address</Text>
-            <Text style={styles.hint}>
+            <Text
+              style={[
+                typography.styles.label,
+                { color: colors.text.primary, marginBottom: spacing[1] },
+              ]}
+            >
+              Child's Email Address
+            </Text>
+            <Text
+              style={[
+                typography.styles.bodySmall,
+                { color: colors.text.tertiary, marginBottom: spacing[2] },
+              ]}
+            >
               This is where all memories will be sent
             </Text>
             <TextInput
-              style={[styles.input, errors.email && styles.inputError]}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.background.primary,
+                  borderColor: errors.email ? colors.status.error : colors.border.DEFAULT,
+                  borderRadius: componentRadius.input,
+                  color: colors.text.primary,
+                },
+                typography.styles.bodyLarge,
+              ]}
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
                 if (errors.email) setErrors((e) => ({ ...e, email: undefined }));
               }}
               placeholder="child@gmail.com"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.text.tertiary}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
             />
-            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+            {errors.email && (
+              <Text
+                style={[
+                  typography.styles.bodySmall,
+                  { color: colors.status.error, marginTop: spacing[1] },
+                ]}
+              >
+                {errors.email}
+              </Text>
+            )}
           </View>
 
-          <TouchableOpacity
-            style={[styles.button, isSubmitting && styles.buttonDisabled]}
-            onPress={handleSubmit}
-            disabled={isSubmitting}
-          >
-            <Text style={styles.buttonText}>
-              {isSubmitting ? 'Creating...' : 'Continue'}
-            </Text>
-          </TouchableOpacity>
+          {/* Submit Button */}
+          <View style={{ marginTop: spacing[6] }}>
+            <Button
+              title={isSubmitting ? 'Creating...' : 'Continue'}
+              onPress={handleSubmit}
+              size="lg"
+              fullWidth
+              disabled={isSubmitting}
+              loading={isSubmitting}
+            />
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -192,98 +311,35 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   header: {
+    alignItems: 'center',
     marginBottom: 40,
-    backgroundColor: 'transparent',
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
-  subtitle: {
-    fontSize: 16,
-    opacity: 0.7,
-    lineHeight: 22,
-  },
-  form: {
-    backgroundColor: 'transparent',
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 24,
-  },
+  form: {},
   inputGroup: {
     marginBottom: 20,
-    backgroundColor: 'transparent',
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  hint: {
-    fontSize: 12,
-    opacity: 0.6,
-    marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
     padding: 16,
-    fontSize: 16,
-    backgroundColor: '#fff',
-    color: '#000',
-  },
-  inputError: {
-    borderColor: '#ff4444',
-  },
-  errorText: {
-    color: '#ff4444',
-    fontSize: 12,
-    marginTop: 4,
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
     padding: 16,
-    backgroundColor: '#fff',
-  },
-  dateButtonText: {
-    fontSize: 16,
-    color: '#000',
   },
   datePickerContainer: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
     marginTop: 8,
     overflow: 'hidden',
   },
   datePickerDone: {
-    backgroundColor: '#007AFF',
     padding: 12,
     alignItems: 'center',
-  },
-  datePickerDoneText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    padding: 18,
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
   },
 });

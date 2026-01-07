@@ -3,15 +3,18 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Image,
   Alert,
   RefreshControl,
+  View,
+  Text,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import * as ImagePicker from 'expo-image-picker';
 
-import { Text, View } from '@/components/Themed';
+import { useTheme } from '@/hooks/useTheme';
+import { Card, Badge, Button, IconButton, Banner, useToast } from '@/components/ui';
+import { useNetwork } from '@/hooks/useNetwork';
 import {
   getOutboxEntries,
   retrySendEntry,
@@ -22,15 +25,18 @@ import {
 import { CapsuleEntry } from '@/types';
 
 export default function OutboxScreen() {
+  const { colors, typography, spacing, componentRadius } = useTheme();
+
   const [entries, setEntries] = useState<CapsuleEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const { isOnline } = useNetwork();
+  const toast = useToast();
 
   const loadEntries = useCallback(async () => {
     const outboxEntries = await getOutboxEntries();
-    // Sort by createdAt descending (newest first)
-    outboxEntries.sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    outboxEntries.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     setEntries(outboxEntries);
   }, []);
@@ -48,7 +54,6 @@ export default function OutboxScreen() {
   };
 
   const handleRetry = async (entry: CapsuleEntry) => {
-    // First check for expired photos
     const invalidUris = await getInvalidPhotoUris(entry);
     if (invalidUris.length > 0) {
       Alert.alert(
@@ -63,7 +68,6 @@ export default function OutboxScreen() {
           {
             text: 'Remove Photo & Retry',
             onPress: async () => {
-              // Remove photo and retry
               entry.photoUris = undefined;
               await retrySendEntry(entry);
               await loadEntries();
@@ -81,7 +85,7 @@ export default function OutboxScreen() {
     setRetryingId(null);
 
     if (result.success) {
-      Alert.alert('Success', 'Email sent successfully!');
+      toast.success('Email sent successfully');
     } else {
       Alert.alert('Send Failed', result.error || 'Failed to send. Please try again.');
     }
@@ -142,18 +146,18 @@ export default function OutboxScreen() {
     });
   };
 
-  const getStatusColor = (status: CapsuleEntry['status']) => {
+  const getBadgeVariant = (status: CapsuleEntry['status']): 'pending' | 'sending' | 'error' | 'success' => {
     switch (status) {
       case 'pending':
-        return '#FF9500';
+        return 'pending';
       case 'sending':
-        return '#007AFF';
+        return 'sending';
       case 'failed':
-        return '#FF3B30';
+        return 'error';
       case 'sent':
-        return '#34C759';
+        return 'success';
       default:
-        return '#999';
+        return 'pending';
     }
   };
 
@@ -174,10 +178,12 @@ export default function OutboxScreen() {
 
   if (entries.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <FontAwesome name="check-circle" size={64} color="#34C759" />
-        <Text style={styles.emptyTitle}>All Caught Up!</Text>
-        <Text style={styles.emptySubtitle}>
+      <View style={[styles.emptyContainer, { backgroundColor: colors.background.primary }]}>
+        <FontAwesome name="check-circle" size={64} color={colors.status.success} />
+        <Text style={[typography.styles.h1, { color: colors.text.primary, marginTop: spacing[5] }]}>
+          All Caught Up!
+        </Text>
+        <Text style={[typography.styles.body, { color: colors.text.secondary, marginTop: spacing[2], textAlign: 'center' }]}>
           No pending entries in your outbox
         </Text>
       </View>
@@ -186,88 +192,89 @@ export default function OutboxScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background.primary }]}
       contentContainerStyle={styles.content}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.interactive.primary}
+        />
       }
     >
-      <Text style={styles.header}>
+      {!isOnline && (
+        <Banner variant="warning" message="You're offline — queued items will retry automatically" style={{ marginBottom: spacing[3] }} />
+      )}
+      <Text style={[typography.styles.bodySmall, { color: colors.text.secondary, marginBottom: spacing[4] }]}>
         {entries.length} pending {entries.length === 1 ? 'entry' : 'entries'}
       </Text>
 
       {entries.map((entry) => (
-        <View key={entry.id} style={styles.entryCard}>
+        <Card key={entry.id} variant="default" style={{ marginBottom: spacing[3] }}>
+          {/* Header Row */}
           <View style={styles.entryHeader}>
             <View style={styles.entryTitleRow}>
-              <Text style={styles.entryTitle}>Day {entry.dayNumber}</Text>
-              <View
-                style={[
-                  styles.statusBadge,
-                  { backgroundColor: getStatusColor(entry.status) + '20' },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.statusText,
-                    { color: getStatusColor(entry.status) },
-                  ]}
-                >
-                  {getStatusText(entry.status)}
-                </Text>
-              </View>
+              <Text style={[typography.styles.h3, { color: colors.text.primary }]}>
+                Day {entry.dayNumber}
+              </Text>
+              <Badge variant={getBadgeVariant(entry.status)} label={getStatusText(entry.status)} />
             </View>
-            <Text style={styles.entryMeta}>
+            <Text style={[typography.styles.bodySmall, { color: colors.text.secondary, marginTop: spacing[1] }]}>
               {entry.childName} • {formatDate(entry.createdAt)}
             </Text>
           </View>
 
+          {/* Message Preview */}
           {entry.text && (
-            <Text style={styles.entryText} numberOfLines={2}>
+            <Text
+              style={[typography.styles.body, { color: colors.text.primary, marginTop: spacing[2] }]}
+              numberOfLines={2}
+            >
               {entry.text}
             </Text>
           )}
 
+          {/* Photo Indicator */}
           {entry.photoUris && entry.photoUris.length > 0 && (
-            <View style={styles.photoPreview}>
-              <FontAwesome name="image" size={14} color="#666" />
-              <Text style={styles.photoText}>
+            <View style={[styles.photoPreview, { marginTop: spacing[2] }]}>
+              <FontAwesome name="image" size={14} color={colors.text.secondary} />
+              <Text style={[typography.styles.bodySmall, { color: colors.text.secondary }]}>
                 {entry.photoUris.length} photo{entry.photoUris.length > 1 ? 's' : ''}
               </Text>
             </View>
           )}
 
+          {/* Error Message */}
           {entry.errorMessage && (
-            <Text style={styles.errorText}>{entry.errorMessage}</Text>
+            <Text style={[typography.styles.bodySmall, { color: colors.status.error, marginTop: spacing[2] }]}>
+              {entry.errorMessage}
+            </Text>
           )}
 
-          <View style={styles.entryActions}>
-            <TouchableOpacity
-              style={[
-                styles.retryButton,
-                retryingId === entry.id && styles.retryButtonDisabled,
-              ]}
+          {/* Action Buttons */}
+          <View style={[styles.entryActions, { marginTop: spacing[3] }]}>
+            <Button
+              title={retryingId === entry.id ? 'Sending...' : 'Retry'}
               onPress={() => handleRetry(entry)}
+              size="sm"
               disabled={retryingId === entry.id || entry.status === 'sending'}
-            >
-              {retryingId === entry.id ? (
-                <Text style={styles.retryButtonText}>Sending...</Text>
-              ) : (
-                <>
-                  <FontAwesome name="refresh" size={14} color="#fff" />
-                  <Text style={styles.retryButtonText}>Retry</Text>
-                </>
-              )}
-            </TouchableOpacity>
+              loading={retryingId === entry.id}
+              icon={
+                retryingId !== entry.id ? (
+                  <FontAwesome name="refresh" size={14} color={colors.text.inverse} />
+                ) : undefined
+              }
+              iconPosition="left"
+            />
 
-            <TouchableOpacity
-              style={styles.deleteButton}
+            <IconButton
+              icon={<FontAwesome name="trash-o" size={16} color={colors.status.error} />}
               onPress={() => handleDelete(entry)}
-            >
-              <FontAwesome name="trash-o" size={16} color="#FF3B30" />
-            </TouchableOpacity>
+              variant="destructive"
+              size="sm"
+            />
           </View>
-        </View>
+        </Card>
       ))}
     </ScrollView>
   );
@@ -281,109 +288,26 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
-  header: {
-    fontSize: 14,
-    opacity: 0.6,
-    marginBottom: 16,
-  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 40,
   },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: 16,
-    opacity: 0.6,
-    textAlign: 'center',
-  },
-  entryCard: {
-    backgroundColor: '#f8f8f8',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  entryHeader: {
-    marginBottom: 8,
-    backgroundColor: 'transparent',
-  },
+  entryHeader: {},
   entryTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
-    backgroundColor: 'transparent',
-  },
-  entryTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  entryMeta: {
-    fontSize: 13,
-    opacity: 0.6,
-  },
-  entryText: {
-    fontSize: 15,
-    lineHeight: 20,
-    marginBottom: 8,
-    color: '#333',
   },
   photoPreview: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 8,
-    backgroundColor: 'transparent',
-  },
-  photoText: {
-    fontSize: 13,
-    color: '#666',
-  },
-  errorText: {
-    fontSize: 13,
-    color: '#FF3B30',
-    marginBottom: 8,
   },
   entryActions: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 8,
-    backgroundColor: 'transparent',
-  },
-  retryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#007AFF',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 6,
-  },
-  retryButtonDisabled: {
-    backgroundColor: '#999',
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  deleteButton: {
-    padding: 10,
   },
 });

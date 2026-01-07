@@ -8,14 +8,20 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  View,
+  Text,
+  Dimensions,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Text, View } from '@/components/Themed';
+import { useTheme } from '@/hooks/useTheme';
+import { Button, PromptCard, StatusIndicator, Banner, useToast } from '@/components/ui';
+import { useNetwork } from '@/hooks/useNetwork';
 import { getDefaultChild, calculateDayNumber, calculateAge } from '@/services/storage';
 import {
   getRandomPromptForAge,
@@ -28,6 +34,8 @@ import { ChildProfile, CapsuleEntry } from '@/types';
 
 export default function ComposeScreen() {
   const router = useRouter();
+  const { colors, typography, spacing, componentRadius } = useTheme();
+
   const [child, setChild] = useState<ChildProfile | null>(null);
   const [prompt, setPrompt] = useState<Prompt | null>(null);
   const [text, setText] = useState('');
@@ -36,6 +44,21 @@ export default function ComposeScreen() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showQueued, setShowQueued] = useState(false);
   const [gmailConnected, setGmailConnected] = useState(false);
+  const { isOnline } = useNetwork();
+  const toast = useToast();
+
+  const MAX_ATTACHMENTS = 5;
+  const MAX_TOTAL_BYTES = 20 * 1024 * 1024; // ~20 MB safety limit
+
+  const movePhoto = (fromIndex: number, toIndex: number) => {
+    setPhotos((prev) => {
+      if (toIndex < 0 || toIndex >= prev.length || fromIndex === toIndex) return prev;
+      const next = [...prev];
+      const [item] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, item);
+      return next;
+    });
+  };
 
   const loadData = useCallback(async () => {
     const defaultChild = await getDefaultChild();
@@ -47,18 +70,15 @@ export default function ComposeScreen() {
       setPrompt(randomPrompt);
     }
 
-    // Check Gmail connection status
     const connected = await isGmailConnected();
     setGmailConnected(connected);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      // Load data if we don't have it yet
       if (!child) {
         loadData();
       } else {
-        // Always check Gmail status when screen is focused
         isGmailConnected().then(setGmailConnected);
       }
     }, [child, loadData])
@@ -75,7 +95,6 @@ export default function ComposeScreen() {
 
   const handlePickImage = async (useCamera: boolean) => {
     try {
-      // Request permissions
       if (useCamera) {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
@@ -94,16 +113,25 @@ export default function ComposeScreen() {
         ? await ImagePicker.launchCameraAsync({
             mediaTypes: ['images'],
             allowsEditing: true,
-            quality: 0.8,
+            quality: 0.75,
           })
         : await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
             allowsEditing: true,
-            quality: 0.8,
+            quality: 0.75,
+            allowsMultipleSelection: true,
           });
 
-      if (!result.canceled && result.assets[0]) {
-        setPhotos((prev) => [...prev, result.assets[0].uri]);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setPhotos((prev) => {
+          const remaining = MAX_ATTACHMENTS - prev.length;
+          const picked = result.assets.map((a) => a.uri).filter(Boolean).slice(0, Math.max(0, remaining));
+          const next = [...prev, ...picked];
+          if (result.assets.length > picked.length) {
+            toast.error(`Maximum ${MAX_ATTACHMENTS} photos per email`);
+          }
+          return next;
+        });
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -120,7 +148,6 @@ export default function ComposeScreen() {
   const handleSend = async () => {
     if (!canSend || !child) return;
 
-    // Check if Gmail is connected
     if (!gmailConnected) {
       Alert.alert(
         'Gmail Not Connected',
@@ -142,21 +169,14 @@ export default function ComposeScreen() {
     const age = calculateAge(child.birthday);
     const dateStr = new Date().toISOString().split('T')[0];
 
-    // Format email per SPEC.md
-    // Subject: Day {N} — {YYYY-MM-DD} — {ChildName}
     const subject = `Day ${dayNumber} — ${dateStr} — ${child.name}`;
 
-    // Body:
-    // Day {N} • Age {X years, Y months}
-    // {User's message text}
-    // #timecapsule
     let body = `Day ${dayNumber} • Age ${age}\n\n`;
     if (text.trim()) {
       body += `${text.trim()}\n\n`;
     }
     body += '#timecapsule';
 
-    // Create capsule entry for potential outbox queueing
     const entry: CapsuleEntry = {
       id: uuidv4(),
       childId: child.id,
@@ -173,18 +193,44 @@ export default function ComposeScreen() {
     };
 
     try {
+      // Size guard: limit total attachments size
+      const sizes = await Promise.all(
+        photos.map(async (uri) => {
+          try {
+            const info = await FileSystem.getInfoAsync(uri);
+            return info.exists && typeof info.size === 'number' ? info.size : 0;
+          } catch {
+            return 0;
+          }
+        })
+      );
+      let total = sizes.reduce((a, b) => a + b, 0);
+      let attachUris = [...photos];
+      if (total > MAX_TOTAL_BYTES) {
+        // Trim from the end until under limit
+        while (attachUris.length > 0 && total > MAX_TOTAL_BYTES) {
+          const removed = attachUris.pop();
+          const idx = photos.indexOf(removed!);
+          total -= sizes[idx] || 0;
+        }
+        if (attachUris.length === 0) {
+          Alert.alert('Attachments too large', 'Photos exceed the size limit. Please remove some or pick smaller photos.');
+          setIsSending(false);
+          return;
+        }
+        toast.error('Attachments trimmed to fit size limit');
+      }
       const result = await sendEmail({
         to: child.email,
         subject,
         body,
-        photoUri: photos.length > 0 ? photos[0] : undefined,
+        photoUris: attachUris.length > 0 ? attachUris : undefined,
       });
 
       if (result.success) {
         setIsSending(false);
         setShowSuccess(true);
 
-        // Reset form after showing success
         setTimeout(() => {
           setText('');
           setPhotos([]);
@@ -192,7 +238,6 @@ export default function ComposeScreen() {
           loadData();
         }, 2000);
       } else {
-        // Queue to outbox on failure
         entry.status = 'failed';
         entry.errorMessage = result.error;
         await addToOutbox(entry);
@@ -200,7 +245,6 @@ export default function ComposeScreen() {
         setIsSending(false);
         setShowQueued(true);
 
-        // Reset form after showing queued
         setTimeout(() => {
           setText('');
           setPhotos([]);
@@ -209,7 +253,6 @@ export default function ComposeScreen() {
         }, 2000);
       }
     } catch (error) {
-      // Queue to outbox on error
       entry.status = 'failed';
       entry.errorMessage = error instanceof Error ? error.message : 'Network error';
       await addToOutbox(entry);
@@ -217,7 +260,6 @@ export default function ComposeScreen() {
       setIsSending(false);
       setShowQueued(true);
 
-      // Reset form after showing queued
       setTimeout(() => {
         setText('');
         setPhotos([]);
@@ -229,8 +271,10 @@ export default function ComposeScreen() {
 
   if (!child) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.loading}>Loading...</Text>
+      <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+        <Text style={[typography.styles.body, { color: colors.text.secondary, textAlign: 'center', marginTop: 100 }]}>
+          Loading...
+        </Text>
       </View>
     );
   }
@@ -240,38 +284,32 @@ export default function ComposeScreen() {
 
   if (showSuccess) {
     return (
-      <View style={styles.successContainer}>
-        <FontAwesome name="check-circle" size={64} color="#34C759" />
-        <Text style={styles.successTitle}>Delivered!</Text>
-        <Text style={styles.successSubtitle}>Day {dayNumber} added to {child.name}'s capsule</Text>
-      </View>
+      <StatusIndicator
+        type="success"
+        title="Delivered!"
+        subtitle={`Day ${dayNumber} added to ${child.name}'s capsule`}
+      />
     );
   }
 
   if (showQueued) {
     return (
-      <View style={styles.successContainer}>
-        <FontAwesome name="clock-o" size={64} color="#FF9500" />
-        <Text style={styles.successTitle}>Queued</Text>
-        <Text style={styles.successSubtitle}>
-          Will retry when connection is restored
-        </Text>
-        <TouchableOpacity
-          style={styles.viewOutboxButton}
-          onPress={() => {
-            setShowQueued(false);
-            router.push('/(tabs)/outbox');
-          }}
-        >
-          <Text style={styles.viewOutboxText}>View Outbox</Text>
-        </TouchableOpacity>
-      </View>
+      <StatusIndicator
+        type="queued"
+        title="Queued"
+        subtitle="Will retry when connection is restored"
+        actionLabel="View Outbox"
+        onAction={() => {
+          setShowQueued(false);
+          router.push('/(tabs)/outbox');
+        }}
+      />
     );
   }
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background.primary }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={90}
     >
@@ -280,102 +318,196 @@ export default function ComposeScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Offline Banner */}
+        {!isOnline && (
+          <Banner variant="warning" message="You're offline — sends will queue" style={{ marginBottom: 12 }} />
+        )}
+
+        {/* Gmail Warning Banner */}
         {!gmailConnected && (
           <TouchableOpacity
-            style={styles.gmailWarning}
+            style={[
+              styles.gmailWarning,
+              {
+                backgroundColor: colors.status.warningBg,
+                borderRadius: componentRadius.card,
+              },
+            ]}
             onPress={() => router.push('/(tabs)/settings')}
           >
-            <FontAwesome name="exclamation-triangle" size={16} color="#856404" />
-            <Text style={styles.gmailWarningText}>
+            <FontAwesome name="exclamation-triangle" size={16} color={colors.status.warning} />
+            <Text
+              style={[
+                typography.styles.label,
+                { flex: 1, color: colors.status.warning },
+              ]}
+            >
               Connect Gmail to send memories
             </Text>
-            <FontAwesome name="chevron-right" size={12} color="#856404" />
+            <FontAwesome name="chevron-right" size={12} color={colors.status.warning} />
           </TouchableOpacity>
         )}
 
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.dayText}>Day {dayNumber}</Text>
-          <Text style={styles.childInfo}>
+          <Text style={[typography.styles.displayMedium, { color: colors.text.primary }]}>
+            Day {dayNumber}
+          </Text>
+          <Text style={[typography.styles.body, { color: colors.text.secondary, marginTop: spacing[1] }]}>
             {child.name} • {age}
           </Text>
         </View>
 
+        {/* Prompt Card */}
         {prompt && (
-          <View style={styles.promptCard}>
-            <View style={styles.promptHeader}>
-              <Text style={styles.promptLabel}>Today's Prompt</Text>
-              <TouchableOpacity onPress={handleRefreshPrompt} style={styles.refreshButton}>
-                <FontAwesome name="refresh" size={16} color="#007AFF" />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.promptText}>{prompt.text}</Text>
+          <View style={{ marginBottom: spacing[5] }}>
+            <PromptCard promptText={prompt.text} onRefresh={handleRefreshPrompt} />
           </View>
         )}
 
-        <View style={styles.inputSection}>
+        {/* Text Input */}
+        <View style={{ marginBottom: spacing[4] }}>
           <TextInput
-            style={styles.textInput}
+            style={[
+              styles.textInput,
+              typography.styles.bodyLarge,
+              {
+                backgroundColor: colors.background.primary,
+                borderColor: colors.border.DEFAULT,
+                borderRadius: componentRadius.input,
+                color: colors.text.primary,
+              },
+            ]}
             value={text}
             onChangeText={setText}
             placeholder="Write a message (optional if adding photo)"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.text.tertiary}
             multiline
             textAlignVertical="top"
           />
         </View>
 
-        {photos.length > 0 && (
-          <View style={styles.photosContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {photos.map((uri, index) => (
-                <View key={uri} style={styles.photoWrapper}>
-                  <Image source={{ uri }} style={styles.photoPreview} />
-                  <TouchableOpacity
-                    style={styles.removePhotoButton}
-                    onPress={() => handleRemovePhoto(index)}
+        {/* Photos Grid Preview with Reorder/Remove */}
+        {photos.length > 0 && (() => {
+          const columns = 3;
+          const gap = 12;
+          const horizontalPadding = 20; // matches scrollContent padding
+          const totalWidth = Dimensions.get('window').width;
+          const itemSize = Math.floor((totalWidth - horizontalPadding * 2 - gap * (columns - 1)) / columns);
+          return (
+            <View style={{ marginBottom: spacing[4] }}>
+              <View style={[styles.gridContainer, { marginHorizontal: 0 }]}>
+                {photos.map((uri, index) => (
+                  <View
+                    key={uri}
+                    style={[
+                      styles.gridItem,
+                      {
+                        width: itemSize,
+                        height: itemSize,
+                        marginRight: (index % columns) === columns - 1 ? 0 : gap,
+                        marginBottom: gap,
+                      },
+                    ]}
                   >
-                    <FontAwesome name="times-circle" size={24} color="#ff4444" />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+                    <Image
+                      source={{ uri }}
+                      style={{ width: '100%', height: '100%', borderRadius: componentRadius.photo }}
+                    />
 
+                    {/* Position badge */}
+                    <View style={[styles.badge, { backgroundColor: colors.card.backgroundAlt }]}> 
+                      <Text style={[typography.styles.bodySmall, { color: colors.text.primary }]}>{index + 1}</Text>
+                    </View>
+
+                    {/* Remove button */}
+                    <TouchableOpacity
+                      accessibilityLabel={`Remove photo ${index + 1}`}
+                      style={[styles.removeBtn]}
+                      onPress={() => handleRemovePhoto(index)}
+                    >
+                      <FontAwesome name="times-circle" size={22} color={colors.status.error} />
+                    </TouchableOpacity>
+
+                    {/* Reorder controls */}
+                    {photos.length > 1 && (
+                      <View style={styles.reorderRow}>
+                        <TouchableOpacity
+                          accessibilityLabel={`Move photo ${index + 1} left`}
+                          disabled={index === 0}
+                          onPress={() => movePhoto(index, index - 1)}
+                          style={[styles.reorderBtn, { opacity: index === 0 ? 0.4 : 1 }]}
+                        >
+                          <FontAwesome name="chevron-left" size={16} color={colors.text.inverse} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          accessibilityLabel={`Move photo ${index + 1} right`}
+                          disabled={index === photos.length - 1}
+                          onPress={() => movePhoto(index, index + 1)}
+                          style={[styles.reorderBtn, { opacity: index === photos.length - 1 ? 0.4 : 1 }]}
+                        >
+                          <FontAwesome name="chevron-right" size={16} color={colors.text.inverse} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+            </View>
+          );
+        })()}
+
+        {/* Media Buttons */}
         <View style={styles.mediaButtons}>
           <TouchableOpacity
-            style={styles.mediaButton}
+            style={[
+              styles.mediaButton,
+              {
+                backgroundColor: colors.card.backgroundAlt,
+                borderRadius: componentRadius.button,
+              },
+            ]}
             onPress={() => handlePickImage(true)}
           >
-            <FontAwesome name="camera" size={20} color="#007AFF" />
-            <Text style={styles.mediaButtonText}>Camera</Text>
+            <FontAwesome name="camera" size={20} color={colors.interactive.primary} />
+            <Text style={[typography.styles.button, { color: colors.interactive.primary }]}>
+              Camera
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.mediaButton}
+            style={[
+              styles.mediaButton,
+              {
+                backgroundColor: colors.card.backgroundAlt,
+                borderRadius: componentRadius.button,
+              },
+            ]}
             onPress={() => handlePickImage(false)}
           >
-            <FontAwesome name="image" size={20} color="#007AFF" />
-            <Text style={styles.mediaButtonText}>Library</Text>
+            <FontAwesome name="image" size={20} color={colors.interactive.primary} />
+            <Text style={[typography.styles.button, { color: colors.interactive.primary }]}>
+              Library
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[
-            styles.sendButton,
-            !canSend && styles.sendButtonDisabled,
-            isSending && styles.sendButtonSending,
-          ]}
+      {/* Footer with Send Button */}
+      <View style={[styles.footer, { backgroundColor: colors.background.primary }]}>
+        <Button
+          title={isSending ? 'Sending...' : 'Send'}
           onPress={handleSend}
+          size="lg"
+          fullWidth
           disabled={!canSend || isSending}
-        >
-          <Text style={styles.sendButtonText}>
-            {isSending ? 'Sending...' : 'Send'}
-          </Text>
-          {!isSending && <FontAwesome name="paper-plane" size={18} color="#fff" style={styles.sendIcon} />}
-        </TouchableOpacity>
+          loading={isSending}
+          icon={
+            !isSending ? (
+              <FontAwesome name="paper-plane" size={18} color={colors.text.inverse} />
+            ) : undefined
+          }
+        />
       </View>
     </KeyboardAvoidingView>
   );
@@ -392,119 +524,66 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 100,
   },
-  loading: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 100,
-  },
   gmailWarning: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff3cd',
-    borderRadius: 8,
     padding: 12,
     marginBottom: 16,
     gap: 8,
   },
-  gmailWarningText: {
-    flex: 1,
-    color: '#856404',
-    fontSize: 14,
-    fontWeight: '500',
-  },
   header: {
     marginBottom: 20,
-    backgroundColor: 'transparent',
-  },
-  dayText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  childInfo: {
-    fontSize: 16,
-    opacity: 0.7,
-  },
-  promptCard: {
-    backgroundColor: '#f0f8ff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  promptHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-    backgroundColor: 'transparent',
-  },
-  promptLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#007AFF',
-    textTransform: 'uppercase',
-  },
-  refreshButton: {
-    padding: 4,
-  },
-  promptText: {
-    fontSize: 17,
-    lineHeight: 24,
-    color: '#333',
-  },
-  inputSection: {
-    marginBottom: 16,
-    backgroundColor: 'transparent',
   },
   textInput: {
-    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
     padding: 16,
-    fontSize: 16,
     minHeight: 100,
-    color: '#000',
   },
-  photosContainer: {
-    marginBottom: 16,
-    backgroundColor: 'transparent',
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
-  photoWrapper: {
-    marginRight: 12,
+  gridItem: {
     position: 'relative',
   },
-  photoPreview: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-  },
-  removePhotoButton: {
+  badge: {
     position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: '#fff',
+    top: 6,
+    left: 6,
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  removeBtn: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
     borderRadius: 12,
+  },
+  reorderRow: {
+    position: 'absolute',
+    bottom: 6,
+    right: 6,
+    flexDirection: 'row',
+    gap: 6,
+  },
+  reorderBtn: {
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   mediaButtons: {
     flexDirection: 'row',
     gap: 12,
-    backgroundColor: 'transparent',
   },
   mediaButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
     padding: 16,
     gap: 8,
-  },
-  mediaButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '500',
   },
   footer: {
     position: 'absolute',
@@ -513,57 +592,5 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 20,
     paddingBottom: 34,
-    backgroundColor: 'transparent',
-  },
-  sendButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendButtonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  sendButtonSending: {
-    backgroundColor: '#5AC8FA',
-  },
-  sendButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  sendIcon: {
-    marginLeft: 8,
-  },
-  successContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  successTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 8,
-  },
-  successSubtitle: {
-    fontSize: 16,
-    opacity: 0.7,
-    textAlign: 'center',
-  },
-  viewOutboxButton: {
-    marginTop: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    backgroundColor: '#f5f5f5',
-  },
-  viewOutboxText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '500',
   },
 });
