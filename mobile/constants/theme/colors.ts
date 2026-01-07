@@ -1,84 +1,84 @@
-// Warm, family-friendly color palette
+// Warm, family-friendly color palette with a premium, earthy touch
 export const palette = {
-  // Primary - Warm Coral (kid-friendly, energetic)
+  // Primary - Deep Warm Coral (sophisticated, not neon)
   coral: {
-    50: '#FFF5F3',
-    100: '#FFE8E3',
-    200: '#FFCFC5',
-    300: '#FFB0A0',
-    400: '#FF8A75',
-    500: '#FF6B50',
-    600: '#E85A42',
-    700: '#C44835',
-    800: '#A03828',
-    900: '#7C2A1D',
+    50: '#FFF0ED',
+    100: '#FFDQD5',
+    200: '#FFBCAD',
+    300: '#FF9885',
+    400: '#FF7055',
+    500: '#F05030', // New primary base
+    600: '#D63D1F',
+    700: '#B02B10',
+    800: '#8C200B',
+    900: '#691607',
   },
 
-  // Secondary - Soft Teal (calming, trustworthy)
+  // Secondary - Muted Teal (calming, nature-inspired)
   teal: {
-    50: '#F0FDFB',
-    100: '#CCFBF1',
-    200: '#99F6E4',
-    300: '#5EEAD4',
-    400: '#2DD4BF',
-    500: '#14B8A6',
-    600: '#0D9488',
-    700: '#0F766E',
-    800: '#115E59',
-    900: '#134E4A',
+    50: '#F2FAFA',
+    100: '#DDF5F5',
+    200: '#BCEBEB',
+    300: '#94DEDE',
+    400: '#6ACCCC',
+    500: '#45B5B5', // Less electric, more sea-glass
+    600: '#329696',
+    700: '#237878',
+    800: '#175C5C',
+    900: '#0E4242',
   },
 
-  // Accent - Warm Gold (memories, precious moments)
+  // Accent - Burnished Gold (memories, heirloom quality)
   gold: {
-    50: '#FFFBEB',
-    100: '#FEF3C7',
-    200: '#FDE68A',
-    300: '#FCD34D',
-    400: '#FBBF24',
-    500: '#F59E0B',
-    600: '#D97706',
-    700: '#B45309',
-    800: '#92400E',
-    900: '#78350F',
+    50: '#FFFAF0',
+    100: '#FFF0C7',
+    200: '#FFE09E',
+    300: '#FFCE70',
+    400: '#FFBC47',
+    500: '#F5A623', // Warmer, less yellow
+    600: '#D68913',
+    700: '#B06C0A',
+    800: '#8C5204',
+    900: '#693B01',
   },
 
-  // Neutrals - Warm gray tones
+  // Neutrals - Warm Stone/Sand (avoids sterile grays)
   neutral: {
     0: '#FFFFFF',
-    50: '#FAFAF9',
-    100: '#F5F5F4',
-    150: '#EFEEEC',
-    200: '#E7E5E4',
-    300: '#D6D3D1',
-    400: '#A8A29E',
-    500: '#78716C',
-    600: '#57534E',
-    700: '#44403C',
-    800: '#292524',
-    900: '#1C1917',
+    50: '#FAFAF9',  // Warm white
+    100: '#F5F5F0', // Bone
+    150: '#EBEBE6',
+    200: '#E3E3DE', // Stone
+    300: '#D1D1CC',
+    400: '#A3A39E',
+    500: '#7D7D78',
+    600: '#5C5C57',
+    700: '#40403C',
+    800: '#292926',
+    900: '#171716',
     1000: '#000000',
   },
 
   // Semantic colors
   success: {
-    light: '#D1FAE5',
-    DEFAULT: '#10B981',
-    dark: '#047857',
+    light: '#E6F6ED',
+    DEFAULT: '#2E8B57', // Sea Green
+    dark: '#1F613C',
   },
   warning: {
-    light: '#FEF3C7',
-    DEFAULT: '#F59E0B',
-    dark: '#B45309',
+    light: '#FFF8E6',
+    DEFAULT: '#E69500', 
+    dark: '#B37400',
   },
   error: {
-    light: '#FEE2E2',
-    DEFAULT: '#EF4444',
-    dark: '#B91C1C',
+    light: '#FEECEC',
+    DEFAULT: '#D32F2F', // Deep red, less jarring
+    dark: '#9A1B1B',
   },
   info: {
-    light: '#DBEAFE',
-    DEFAULT: '#3B82F6',
-    dark: '#1D4ED8',
+    light: '#E6F3F7',
+    DEFAULT: '#4A90E2',
+    dark: '#2A6BB5',
   },
 };
 
@@ -86,8 +86,8 @@ export const palette = {
 export const lightTheme = {
   // Backgrounds
   background: {
-    primary: palette.neutral[0],
-    secondary: palette.neutral[50],
+    primary: palette.neutral[50], // Slightly off-white for warmth
+    secondary: palette.neutral[0],  // Cards/Sheets usually white
     tertiary: palette.neutral[100],
     elevated: palette.neutral[0],
   },
@@ -97,8 +97,8 @@ export const lightTheme = {
     primary: palette.neutral[900],
     secondary: palette.neutral[600],
     tertiary: palette.neutral[500],
-    inverse: palette.neutral[0],
-    link: palette.coral[500],
+    inverse: palette.neutral[50],
+    link: palette.coral[600],
   },
 
   // Interactive
@@ -113,8 +113,8 @@ export const lightTheme = {
 
   // Borders
   border: {
-    light: palette.neutral[200],
-    DEFAULT: palette.neutral[300],
+    light: palette.neutral[150],
+    DEFAULT: palette.neutral[200],
     strong: palette.neutral[400],
     focus: palette.coral[500],
   },
@@ -134,22 +134,22 @@ export const lightTheme = {
   // Components
   card: {
     background: palette.neutral[0],
-    backgroundAlt: palette.neutral[100],
-    border: palette.neutral[200],
-    shadow: 'rgba(0, 0, 0, 0.05)',
+    backgroundAlt: palette.neutral[50],
+    border: palette.neutral[150],
+    shadow: 'rgba(23, 23, 22, 0.08)', // Warmer shadow
   },
 
   prompt: {
-    background: palette.coral[50],
-    border: palette.coral[200],
-    label: palette.coral[600],
+    background: '#FFF5F2', // Very light coral tint
+    border: palette.coral[100],
+    label: palette.coral[700],
   },
 
   tabBar: {
     background: palette.neutral[0],
     active: palette.coral[500],
     inactive: palette.neutral[400],
-    border: palette.neutral[200],
+    border: palette.neutral[150],
   },
 };
 
@@ -177,50 +177,50 @@ export const darkTheme = {
     primary: palette.coral[400],
     primaryHover: palette.coral[500],
     primaryPressed: palette.coral[600],
-    primaryDisabled: palette.neutral[600],
+    primaryDisabled: palette.neutral[700],
     secondary: palette.teal[400],
     secondaryHover: palette.teal[500],
   },
 
   // Borders
   border: {
-    light: palette.neutral[700],
-    DEFAULT: palette.neutral[600],
-    strong: palette.neutral[500],
+    light: palette.neutral[800],
+    DEFAULT: palette.neutral[700],
+    strong: palette.neutral[600],
     focus: palette.coral[400],
   },
 
   // Status
   status: {
     success: palette.success.DEFAULT,
-    successBg: 'rgba(16, 185, 129, 0.15)',
+    successBg: 'rgba(46, 139, 87, 0.15)',
     warning: palette.warning.DEFAULT,
-    warningBg: 'rgba(245, 158, 11, 0.15)',
+    warningBg: 'rgba(230, 149, 0, 0.15)',
     error: palette.error.DEFAULT,
-    errorBg: 'rgba(239, 68, 68, 0.15)',
+    errorBg: 'rgba(211, 47, 47, 0.15)',
     pending: palette.gold[400],
-    pendingBg: 'rgba(245, 158, 11, 0.15)',
+    pendingBg: 'rgba(245, 166, 35, 0.15)',
   },
 
   // Components
   card: {
     background: palette.neutral[800],
     backgroundAlt: palette.neutral[700],
-    border: palette.neutral[600],
-    shadow: 'rgba(0, 0, 0, 0.3)',
+    border: palette.neutral[700],
+    shadow: 'rgba(0, 0, 0, 0.4)',
   },
 
   prompt: {
-    background: 'rgba(255, 107, 80, 0.1)',
-    border: palette.coral[700],
-    label: palette.coral[400],
+    background: 'rgba(240, 80, 48, 0.1)',
+    border: palette.coral[800],
+    label: palette.coral[300],
   },
 
   tabBar: {
     background: palette.neutral[900],
     active: palette.coral[400],
     inactive: palette.neutral[500],
-    border: palette.neutral[700],
+    border: palette.neutral[800],
   },
 };
 

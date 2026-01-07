@@ -18,30 +18,39 @@ export function PromptCard({ promptText, onRefresh }: PromptCardProps) {
         {
           backgroundColor: colors.prompt.background,
           borderRadius: componentRadius.card,
-          padding: spacing[4],
+          padding: spacing[5], // Increased padding
+          borderColor: colors.prompt.border,
+          borderWidth: 1,
         },
       ]}
     >
       <View style={styles.header}>
-        <Text
-          style={[
-            typography.styles.labelSmall,
-            { color: colors.prompt.label, textTransform: 'uppercase' },
-          ]}
-        >
-          TODAY'S PROMPT
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <FontAwesome name="lightbulb-o" size={14} color={colors.prompt.label} />
+          <Text
+            style={[
+              typography.styles.labelSmall,
+              { color: colors.prompt.label },
+            ]}
+          >
+            TODAY'S PROMPT
+          </Text>
+        </View>
         <TouchableOpacity
           onPress={onRefresh}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <FontAwesome name="refresh" size={16} color={colors.prompt.label} />
+          <FontAwesome name="refresh" size={14} color={colors.prompt.label} />
         </TouchableOpacity>
       </View>
       <Text
         style={[
-          typography.styles.body,
-          { color: colors.text.primary, marginTop: spacing[2] },
+          typography.styles.bodyLarge, // Increased size
+          {
+            color: colors.text.primary,
+            marginTop: spacing[3],
+            lineHeight: 24,
+          },
         ]}
       >
         {promptText}
@@ -56,5 +65,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 2,
   },
 });

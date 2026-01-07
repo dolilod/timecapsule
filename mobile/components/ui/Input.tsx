@@ -18,13 +18,15 @@ export function Input({
 }: InputProps) {
   const { colors, typography, componentRadius, spacing } = useTheme();
 
+  const [isFocused, setIsFocused] = React.useState(false);
+
   return (
     <View style={styles.container}>
       {label && (
         <Text
           style={[
             typography.styles.label,
-            { color: colors.text.primary, marginBottom: spacing[2] },
+            { color: colors.text.secondary, marginBottom: spacing[2], marginLeft: 2 },
           ]}
         >
           {label}
@@ -34,7 +36,7 @@ export function Input({
         <Text
           style={[
             typography.styles.bodySmall,
-            { color: colors.text.tertiary, marginBottom: spacing[2] },
+            { color: colors.text.tertiary, marginBottom: spacing[2], marginLeft: 2 },
           ]}
         >
           {hint}
@@ -43,26 +45,34 @@ export function Input({
       <TextInput
         style={[
           styles.input,
-          typography.styles.bodyLarge,
+          typography.styles.body,
           {
-            backgroundColor: colors.background.primary,
-            borderColor: error ? colors.status.error : colors.border.DEFAULT,
+            backgroundColor: colors.background.secondary, // Slightly darker than primary
+            borderColor: error
+              ? colors.status.error
+              : isFocused
+                ? colors.border.focus
+                : colors.border.DEFAULT,
+            borderWidth: isFocused ? 1.5 : 1,
             borderRadius: componentRadius.input,
             color: colors.text.primary,
-            minHeight: multiline ? 100 : undefined,
+            minHeight: multiline ? 120 : undefined,
+            paddingTop: multiline ? 16 : 16, // Ensure text starts at top for multiline
           },
           style,
         ]}
         placeholderTextColor={colors.text.tertiary}
         multiline={multiline}
         textAlignVertical={multiline ? 'top' : 'center'}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         {...props}
       />
       {error && (
         <Text
           style={[
             typography.styles.bodySmall,
-            { color: colors.status.error, marginTop: spacing[1] },
+            { color: colors.status.error, marginTop: spacing[1], marginLeft: 2 },
           ]}
         >
           {error}
@@ -74,10 +84,9 @@ export function Input({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   input: {
-    borderWidth: 1,
     padding: 16,
   },
 });

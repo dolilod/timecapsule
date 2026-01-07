@@ -103,11 +103,13 @@ export function Button({
         { borderRadius: componentRadius.button },
         variantStyles.container,
         sizeStyles.container,
+        // Add shadow for primary buttons
+        variant === 'primary' && !disabled && styles.shadow,
         fullWidth && styles.fullWidth,
         (disabled || loading) && styles.disabled,
         style,
       ]}
-      activeOpacity={0.8}
+      activeOpacity={0.7}
     >
       {loading ? (
         <ActivityIndicator color={variantStyles.text.color} />
@@ -136,6 +138,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+  },
+  shadow: {
+    shadowColor: '#F05030', // Matching primary color
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   fullWidth: {
     width: '100%',

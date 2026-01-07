@@ -20,7 +20,7 @@ import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 
 import { useTheme } from '@/hooks/useTheme';
-import { Button, PromptCard, StatusIndicator, Banner, useToast } from '@/components/ui';
+import { Button, PromptCard, StatusIndicator, Banner, useToast, Input } from '@/components/ui';
 import { useNetwork } from '@/hooks/useNetwork';
 import { getDefaultChild, calculateDayNumber, calculateAge } from '@/services/storage';
 import {
@@ -111,16 +111,16 @@ export default function ComposeScreen() {
 
       const result = useCamera
         ? await ImagePicker.launchCameraAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            quality: 0.75,
-          })
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          quality: 0.75,
+        })
         : await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            quality: 0.75,
-            allowsMultipleSelection: true,
-          });
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          quality: 0.75,
+          allowsMultipleSelection: true,
+        });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setPhotos((prev) => {
@@ -350,12 +350,30 @@ export default function ComposeScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[typography.styles.displayMedium, { color: colors.text.primary }]}>
+          <Text
+            style={[
+              typography.styles.displayMedium,
+              {
+                color: colors.text.primary,
+                textAlign: 'center',
+                marginBottom: 4,
+              }
+            ]}
+          >
             Day {dayNumber}
           </Text>
-          <Text style={[typography.styles.body, { color: colors.text.secondary, marginTop: spacing[1] }]}>
-            {child.name} • {age}
-          </Text>
+          <View
+            style={{
+              backgroundColor: colors.background.tertiary,
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+              borderRadius: 20
+            }}
+          >
+            <Text style={[typography.styles.label, { color: colors.text.secondary }]}>
+              {child.name} • {age}
+            </Text>
+          </View>
         </View>
 
         {/* Prompt Card */}
@@ -366,24 +384,16 @@ export default function ComposeScreen() {
         )}
 
         {/* Text Input */}
-        <View style={{ marginBottom: spacing[4] }}>
-          <TextInput
-            style={[
-              styles.textInput,
-              typography.styles.bodyLarge,
-              {
-                backgroundColor: colors.background.primary,
-                borderColor: colors.border.DEFAULT,
-                borderRadius: componentRadius.input,
-                color: colors.text.primary,
-              },
-            ]}
+        <View style={{ marginBottom: spacing[2] }}>
+          <Input
             value={text}
             onChangeText={setText}
-            placeholder="Write a message (optional if adding photo)"
-            placeholderTextColor={colors.text.tertiary}
+            placeholder="Write a message (optional if adding photo)..."
             multiline
-            textAlignVertical="top"
+            style={{
+              minHeight: 120,
+              fontSize: typography.fontSize.md,
+            }}
           />
         </View>
 
@@ -416,7 +426,7 @@ export default function ComposeScreen() {
                     />
 
                     {/* Position badge */}
-                    <View style={[styles.badge, { backgroundColor: colors.card.backgroundAlt }]}> 
+                    <View style={[styles.badge, { backgroundColor: colors.card.backgroundAlt }]}>
                       <Text style={[typography.styles.bodySmall, { color: colors.text.primary }]}>{index + 1}</Text>
                     </View>
 
@@ -521,23 +531,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 100,
+    padding: 24, // Increased padding for airy feel
+    paddingBottom: 120,
   },
   gmailWarning: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    marginBottom: 16,
-    gap: 8,
+    padding: 16,
+    marginBottom: 24,
+    gap: 12,
   },
   header: {
-    marginBottom: 20,
-  },
-  textInput: {
-    borderWidth: 1,
-    padding: 16,
-    minHeight: 100,
+    marginBottom: 32,
+    alignItems: 'center', // Center align for premium feel
   },
   gridContainer: {
     flexDirection: 'row',
@@ -545,52 +551,79 @@ const styles = StyleSheet.create({
   },
   gridItem: {
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   badge: {
     position: 'absolute',
-    top: 6,
-    left: 6,
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    top: 8,
+    left: 8,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    overflow: 'hidden',
   },
   removeBtn: {
     position: 'absolute',
-    top: 6,
-    right: 6,
+    top: -8,
+    right: -8,
+    backgroundColor: '#fff',
     borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   reorderRow: {
     position: 'absolute',
-    bottom: 6,
-    right: 6,
+    bottom: 8,
+    right: 8,
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
   },
   reorderBtn: {
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     borderRadius: 8,
   },
   mediaButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   mediaButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    gap: 8,
+    padding: 20,
+    gap: 10,
+    // Add shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   footer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 20,
-    paddingBottom: 34,
+    padding: 24,
+    paddingBottom: 40,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
   },
 });

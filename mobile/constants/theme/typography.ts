@@ -31,11 +31,13 @@ export const textStyles = {
     fontSize: fontSize['4xl'],
     fontWeight: fontWeight.bold,
     lineHeight: fontSize['4xl'] * lineHeight.tight,
+    letterSpacing: -1,
   },
   displayMedium: {
     fontSize: fontSize['3xl'],
     fontWeight: fontWeight.bold,
     lineHeight: fontSize['3xl'] * lineHeight.tight,
+    letterSpacing: -0.5,
   },
 
   // Headings
@@ -43,28 +45,30 @@ export const textStyles = {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
     lineHeight: fontSize['2xl'] * lineHeight.tight,
+    letterSpacing: -0.5,
   },
   h2: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.semibold,
     lineHeight: fontSize.xl * lineHeight.tight,
+    letterSpacing: -0.25,
   },
   h3: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    lineHeight: fontSize.lg * lineHeight.tight,
+    lineHeight: fontSize.lg * lineHeight.normal,
   },
 
   // Body
   bodyLarge: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.normal,
-    lineHeight: fontSize.md * lineHeight.normal,
+    lineHeight: fontSize.md * lineHeight.relaxed,
   },
   body: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.normal,
-    lineHeight: fontSize.base * lineHeight.normal,
+    lineHeight: fontSize.base * lineHeight.relaxed,
   },
   bodySmall: {
     fontSize: fontSize.sm,
@@ -83,6 +87,7 @@ export const textStyles = {
     fontWeight: fontWeight.medium,
     lineHeight: fontSize.xs * lineHeight.normal,
     letterSpacing: 0.5,
+    textTransform: 'uppercase' as const,
   },
 
   // Buttons

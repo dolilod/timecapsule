@@ -250,13 +250,788 @@
       "id": 50,
       "ageBucket": "10-18yr",
       "text": "Write a thank-you note to them for something specific."
+    },
+    {
+      "id": 51,
+      "ageBucket": "0-12mo",
+      "text": "What was the hardest part of today (and how did you get through it)?"
+    },
+    {
+      "id": 52,
+      "ageBucket": "0-12mo",
+      "text": "Take a photo of their favorite sleep spot."
+    },
+    {
+      "id": 53,
+      "ageBucket": "0-12mo",
+      "text": "What song seems to calm them down instantly?"
+    },
+    {
+      "id": 54,
+      "ageBucket": "0-12mo",
+      "text": "Take a photo of them with a grandparent or loved one."
+    },
+    {
+      "id": 55,
+      "ageBucket": "0-12mo",
+      "text": "What's a new sound they made today?"
+    },
+    {
+      "id": 56,
+      "ageBucket": "0-12mo",
+      "text": "Reflect: \"I never thought I would be the kind of parent who...\""
+    },
+    {
+      "id": 57,
+      "ageBucket": "0-12mo",
+      "text": "Record 10 seconds of tummy time (or them trying to move)."
+    },
+    {
+      "id": 58,
+      "ageBucket": "0-12mo",
+      "text": "What size clothes are they wearing right now?"
+    },
+    {
+      "id": 59,
+      "ageBucket": "0-12mo",
+      "text": "Take a photo of their tiny feet."
+    },
+    {
+      "id": 60,
+      "ageBucket": "0-12mo",
+      "text": "What made them cry today?"
+    },
+    {
+      "id": 61,
+      "ageBucket": "0-12mo",
+      "text": "Reflect: What part of your pre-baby life did you miss today?"
+    },
+    {
+      "id": 62,
+      "ageBucket": "0-12mo",
+      "text": "Take a photo of your view from the rocking chair, bed, or floor."
+    },
+    {
+      "id": 63,
+      "ageBucket": "0-12mo",
+      "text": "What made you laugh out loud at them today?"
+    },
+    {
+      "id": 64,
+      "ageBucket": "0-12mo",
+      "text": "\"Today was a [fill in the blank] day.\""
+    },
+    {
+      "id": 65,
+      "ageBucket": "0-12mo",
+      "text": "Take a photo of their hand holding yours."
+    },
+    {
+      "id": 66,
+      "ageBucket": "0-12mo",
+      "text": "What's the weirdest thing you Googled today about them?"
+    },
+    {
+      "id": 67,
+      "ageBucket": "0-12mo",
+      "text": "Record their laugh (or just their breathing) for 10 seconds."
+    },
+    {
+      "id": 68,
+      "ageBucket": "0-12mo",
+      "text": "Who do they look like most today?"
+    },
+    {
+      "id": 69,
+      "ageBucket": "0-12mo",
+      "text": "Take a photo of a mess they made (spit up, toys, etc.)."
+    },
+    {
+      "id": 70,
+      "ageBucket": "0-12mo",
+      "text": "Write a note to them about how much you love them right now."
+    },
+    {
+      "id": 71,
+      "ageBucket": "0-12mo",
+      "text": "What is their favorite toy or object to stare at?"
+    },
+    {
+      "id": 72,
+      "ageBucket": "0-12mo",
+      "text": "Take a photo of them in the bath."
+    },
+    {
+      "id": 73,
+      "ageBucket": "0-12mo",
+      "text": "What time did you wake up today?"
+    },
+    {
+      "id": 74,
+      "ageBucket": "0-12mo",
+      "text": "\"I promise to tell you the story of...\""
+    },
+    {
+      "id": 75,
+      "ageBucket": "0-12mo",
+      "text": "Take a photo of them being held by someone else."
+    },
+    {
+      "id": 76,
+      "ageBucket": "0-12mo",
+      "text": "What’s a nickname you called them today?"
+    },
+    {
+      "id": 77,
+      "ageBucket": "0-12mo",
+      "text": "If you could freeze time right now, what moment would you pick?"
+    },
+    {
+      "id": 78,
+      "ageBucket": "0-12mo",
+      "text": "Record yourself talking to them for 15 seconds."
+    },
+    {
+      "id": 79,
+      "ageBucket": "0-12mo",
+      "text": "What’s something they did for the first time recently?"
+    },
+    {
+      "id": 80,
+      "ageBucket": "0-12mo",
+      "text": "Take a photo of their outfit today."
+    },
+    {
+      "id": 81,
+      "ageBucket": "1-3yr",
+      "text": "What is their favorite word to say \"no\" to right now?"
+    },
+    {
+      "id": 82,
+      "ageBucket": "1-3yr",
+      "text": "Take a photo of them trying to dress themselves."
+    },
+    {
+      "id": 83,
+      "ageBucket": "1-3yr",
+      "text": "What’s a \"toddler logic\" moment that baffled you today?"
+    },
+    {
+      "id": 84,
+      "ageBucket": "1-3yr",
+      "text": "Record them dancing to their favorite song."
+    },
+    {
+      "id": 85,
+      "ageBucket": "1-3yr",
+      "text": "What food did they refuse to eat today (that they liked yesterday)?"
+    },
+    {
+      "id": 86,
+      "ageBucket": "1-3yr",
+      "text": "Take a photo of their favorite book right now."
+    },
+    {
+      "id": 87,
+      "ageBucket": "1-3yr",
+      "text": "What made them have a tantrum today?"
+    },
+    {
+      "id": 88,
+      "ageBucket": "1-3yr",
+      "text": "Reflect: What is the most testing part of this age for you right now?"
+    },
+    {
+      "id": 89,
+      "ageBucket": "1-3yr",
+      "text": "What new skill are they working on mastering?"
+    },
+    {
+      "id": 90,
+      "ageBucket": "1-3yr",
+      "text": "Take a photo of them playing outside."
+    },
+    {
+      "id": 91,
+      "ageBucket": "1-3yr",
+      "text": "What did they do that made you feel like they are growing up too fast?"
+    },
+    {
+      "id": 92,
+      "ageBucket": "1-3yr",
+      "text": "Copy a sentence they said today exactly as they said it."
+    },
+    {
+      "id": 93,
+      "ageBucket": "1-3yr",
+      "text": "Take a photo of their \"collection\" (rocks, sticks, toys)."
+    },
+    {
+      "id": 94,
+      "ageBucket": "1-3yr",
+      "text": "Who is their best friend (real or imaginary)?"
+    },
+    {
+      "id": 95,
+      "ageBucket": "1-3yr",
+      "text": "Record them climbing something they shouldn't (or should)."
+    },
+    {
+      "id": 96,
+      "ageBucket": "1-3yr",
+      "text": "What’s the funniest mispronunciation they have right now?"
+    },
+    {
+      "id": 97,
+      "ageBucket": "1-3yr",
+      "text": "Take a photo of them sleeping (they look so peaceful!)."
+    },
+    {
+      "id": 98,
+      "ageBucket": "1-3yr",
+      "text": "What comfort object can they not live without?"
+    },
+    {
+      "id": 99,
+      "ageBucket": "1-3yr",
+      "text": "Reflect: What quality do they have now that you hope they keep as an adult?"
+    },
+    {
+      "id": 100,
+      "ageBucket": "1-3yr",
+      "text": "What activity keeps them busy for more than 5 minutes?"
+    },
+    {
+      "id": 101,
+      "ageBucket": "1-3yr",
+      "text": "Take a photo of what they look like when they are mad."
+    },
+    {
+      "id": 102,
+      "ageBucket": "1-3yr",
+      "text": "\"I am so proud that you learned to...\""
+    },
+    {
+      "id": 103,
+      "ageBucket": "1-3yr",
+      "text": "What is their favorite animal sound to make?"
+    },
+    {
+      "id": 104,
+      "ageBucket": "1-3yr",
+      "text": "Take a photo of you and them making a silly face."
+    },
+    {
+      "id": 105,
+      "ageBucket": "1-3yr",
+      "text": "What did you have to negotiate with them about today?"
+    },
+    {
+      "id": 106,
+      "ageBucket": "1-3yr",
+      "text": "What’s the sweetest thing they did today?"
+    },
+    {
+      "id": 107,
+      "ageBucket": "1-3yr",
+      "text": "Record them telling you a \"story\"."
+    },
+    {
+      "id": 108,
+      "ageBucket": "1-3yr",
+      "text": "What’s a rule they love to break?"
+    },
+    {
+      "id": 109,
+      "ageBucket": "1-3yr",
+      "text": "Take a photo of their hands doing something (drawing, eating)."
+    },
+    {
+      "id": 110,
+      "ageBucket": "1-3yr",
+      "text": "Reflect: Write about a moment today where you had to practice extreme patience."
+    },
+    {
+      "id": 111,
+      "ageBucket": "3-5yr",
+      "text": "What \"why\" question did they ask today?"
+    },
+    {
+      "id": 112,
+      "ageBucket": "3-5yr",
+      "text": "Take a photo of their favorite costume or dress-up outfit."
+    },
+    {
+      "id": 113,
+      "ageBucket": "3-5yr",
+      "text": "Who is their \"enemy\" today (and why)?"
+    },
+    {
+      "id": 114,
+      "ageBucket": "3-5yr",
+      "text": "Record them explaining how something works."
+    },
+    {
+      "id": 115,
+      "ageBucket": "3-5yr",
+      "text": "What did they say that made no sense but was hilarious?"
+    },
+    {
+      "id": 116,
+      "ageBucket": "3-5yr",
+      "text": "Take a photo of a fort or structure they built."
+    },
+    {
+      "id": 117,
+      "ageBucket": "3-5yr",
+      "text": "What are they afraid of in the dark right now?"
+    },
+    {
+      "id": 118,
+      "ageBucket": "3-5yr",
+      "text": "Reflect: What part of their personality reminds you of yourself?"
+    },
+    {
+      "id": 119,
+      "ageBucket": "3-5yr",
+      "text": "What did they help you with today?"
+    },
+    {
+      "id": 120,
+      "ageBucket": "3-5yr",
+      "text": "Take a photo of them with a friend."
+    },
+    {
+      "id": 121,
+      "ageBucket": "3-5yr",
+      "text": "What story did they tell you about their day?"
+    },
+    {
+      "id": 122,
+      "ageBucket": "3-5yr",
+      "text": "\"When I grow up, I want to be...\""
+    },
+    {
+      "id": 123,
+      "ageBucket": "3-5yr",
+      "text": "Take a photo of their bedhead hair in the morning."
+    },
+    {
+      "id": 124,
+      "ageBucket": "3-5yr",
+      "text": "What game do they want to play over and over?"
+    },
+    {
+      "id": 125,
+      "ageBucket": "3-5yr",
+      "text": "Record them singing a song they made up."
+    },
+    {
+      "id": 126,
+      "ageBucket": "3-5yr",
+      "text": "What did they get in trouble for today?"
+    },
+    {
+      "id": 127,
+      "ageBucket": "3-5yr",
+      "text": "Take a photo of them concentrating hard on something."
+    },
+    {
+      "id": 128,
+      "ageBucket": "3-5yr",
+      "text": "What is their favorite joke right now?"
+    },
+    {
+      "id": 129,
+      "ageBucket": "3-5yr",
+      "text": "Reflect: What is a moment today where you felt like a \"good parent\"?"
+    },
+    {
+      "id": 130,
+      "ageBucket": "3-5yr",
+      "text": "What show or character are they obsessed with?"
+    },
+    {
+      "id": 131,
+      "ageBucket": "3-5yr",
+      "text": "Take a photo of a drawing they made for you."
+    },
+    {
+      "id": 132,
+      "ageBucket": "3-5yr",
+      "text": "What snack do they ask for constantly?"
+    },
+    {
+      "id": 133,
+      "ageBucket": "3-5yr",
+      "text": "\"I love you because...\" (Ask them to finish the sentence)."
+    },
+    {
+      "id": 134,
+      "ageBucket": "3-5yr",
+      "text": "Take a photo of their shoes (they grow so fast!)."
+    },
+    {
+      "id": 135,
+      "ageBucket": "3-5yr",
+      "text": "What big word did they use correctly today?"
+    },
+    {
+      "id": 136,
+      "ageBucket": "3-5yr",
+      "text": "What did they dream about?"
+    },
+    {
+      "id": 137,
+      "ageBucket": "3-5yr",
+      "text": "Record them answering: \"What makes you happy?\""
+    },
+    {
+      "id": 138,
+      "ageBucket": "3-5yr",
+      "text": "What is a rule they made up for a game?"
+    },
+    {
+      "id": 139,
+      "ageBucket": "3-5yr",
+      "text": "Take a photo of them hugging a sibling or stuffed animal."
+    },
+    {
+      "id": 140,
+      "ageBucket": "3-5yr",
+      "text": "Reflect: Write a note about how their independence is growing."
+    },
+    {
+      "id": 141,
+      "ageBucket": "5-10yr",
+      "text": "What did they do today that made you think \"they are getting so big\"?"
+    },
+    {
+      "id": 142,
+      "ageBucket": "5-10yr",
+      "text": "Take a photo of their homework or school project."
+    },
+    {
+      "id": 143,
+      "ageBucket": "5-10yr",
+      "text": "Who is a friend they talked about today?"
+    },
+    {
+      "id": 144,
+      "ageBucket": "5-10yr",
+      "text": "Record them explaining the rules of a game they like."
+    },
+    {
+      "id": 145,
+      "ageBucket": "5-10yr",
+      "text": "What is a question they asked about the world/news?"
+    },
+    {
+      "id": 146,
+      "ageBucket": "5-10yr",
+      "text": "\"I am good at...\" (Ask them to finish the sentence)."
+    },
+    {
+      "id": 147,
+      "ageBucket": "5-10yr",
+      "text": "Take a photo of their messy room (reality check)."
+    },
+    {
+      "id": 148,
+      "ageBucket": "5-10yr",
+      "text": "What did they read today?"
+    },
+    {
+      "id": 149,
+      "ageBucket": "5-10yr",
+      "text": "What made them frustrated with themselves?"
+    },
+    {
+      "id": 150,
+      "ageBucket": "5-10yr",
+      "text": "Reflect: what is a conversation you had today that you want to remember?"
+    },
+    {
+      "id": 151,
+      "ageBucket": "5-10yr",
+      "text": "What is their favorite outfit to wear right now?"
+    },
+    {
+      "id": 152,
+      "ageBucket": "5-10yr",
+      "text": "Take a photo of them doing a chore."
+    },
+    {
+      "id": 153,
+      "ageBucket": "5-10yr",
+      "text": "What did they say that hurt your feelings (or someone else's)?"
+    },
+    {
+      "id": 154,
+      "ageBucket": "5-10yr",
+      "text": "\"My favorite thing to do with you is...\" (Ask them)."
+    },
+    {
+      "id": 155,
+      "ageBucket": "5-10yr",
+      "text": "Record them telling a joke."
+    },
+    {
+      "id": 156,
+      "ageBucket": "5-10yr",
+      "text": "What do they want to buy with their own money?"
+    },
+    {
+      "id": 157,
+      "ageBucket": "5-10yr",
+      "text": "Take a photo of them playing a sport or active game."
+    },
+    {
+      "id": 158,
+      "ageBucket": "5-10yr",
+      "text": "What is a fear they conquered (or faced) recently?"
+    },
+    {
+      "id": 159,
+      "ageBucket": "5-10yr",
+      "text": "What did they create today (Lego, art, code)?"
+    },
+    {
+      "id": 160,
+      "ageBucket": "5-10yr",
+      "text": "Reflect: What is a parenting challenge you are facing with them right now?"
+    },
+    {
+      "id": 161,
+      "ageBucket": "5-10yr",
+      "text": "What is their favorite subject in school right now?"
+    },
+    {
+      "id": 162,
+      "ageBucket": "5-10yr",
+      "text": "\"I wish I could...\" (Ask them)."
+    },
+    {
+      "id": 163,
+      "ageBucket": "5-10yr",
+      "text": "Take a photo of them eating their favorite meal."
+    },
+    {
+      "id": 164,
+      "ageBucket": "5-10yr",
+      "text": "What is a \"big kid\" privilege they earned or want?"
+    },
+    {
+      "id": 165,
+      "ageBucket": "5-10yr",
+      "text": "Who is their role model right now?"
+    },
+    {
+      "id": 166,
+      "ageBucket": "5-10yr",
+      "text": "Record them practicing a skill (instrument, sport, etc.)."
+    },
+    {
+      "id": 167,
+      "ageBucket": "5-10yr",
+      "text": "What made them laugh uncontrollably today?"
+    },
+    {
+      "id": 168,
+      "ageBucket": "5-10yr",
+      "text": "What did they do to help around the house?"
+    },
+    {
+      "id": 169,
+      "ageBucket": "5-10yr",
+      "text": "Take a photo of them with their siblings/cousins."
+    },
+    {
+      "id": 170,
+      "ageBucket": "5-10yr",
+      "text": "Reflect: Write a note about a trait of theirs you admire."
+    },
+    {
+      "id": 171,
+      "ageBucket": "10-18yr",
+      "text": "What song text did you overhear them singing?"
+    },
+    {
+      "id": 172,
+      "ageBucket": "10-18yr",
+      "text": "Take a photo of their \"outfit of the day\"."
+    },
+    {
+      "id": 173,
+      "ageBucket": "10-18yr",
+      "text": "What is something they know more about than you do?"
+    },
+    {
+      "id": 174,
+      "ageBucket": "10-18yr",
+      "text": "Record a 10-second interview: \"What's the best thing about being your age?\""
+    },
+    {
+      "id": 175,
+      "ageBucket": "10-18yr",
+      "text": "What did they complain about today (and was it valid)?"
+    },
+    {
+      "id": 176,
+      "ageBucket": "10-18yr",
+      "text": "Reflect: What quality of theirs do you hope they never lose?"
+    },
+    {
+      "id": 177,
+      "ageBucket": "10-18yr",
+      "text": "What new slang word did they use?"
+    },
+    {
+      "id": 178,
+      "ageBucket": "10-18yr",
+      "text": "Take a photo of them doing homework or studying."
+    },
+    {
+      "id": 179,
+      "ageBucket": "10-18yr",
+      "text": "What is a boundary they are pushing against?"
+    },
+    {
+      "id": 180,
+      "ageBucket": "10-18yr",
+      "text": "\"I am so glad you...\" (Tell them)."
+    },
+    {
+      "id": 181,
+      "ageBucket": "10-18yr",
+      "text": "What movie do they want to see?"
+    },
+    {
+      "id": 182,
+      "ageBucket": "10-18yr",
+      "text": "Take a photo of them with their team/group/club."
+    },
+    {
+      "id": 183,
+      "ageBucket": "10-18yr",
+      "text": "What world event did they ask about?"
+    },
+    {
+      "id": 184,
+      "ageBucket": "10-18yr",
+      "text": "What is something they did that showed maturity?"
+    },
+    {
+      "id": 185,
+      "ageBucket": "10-18yr",
+      "text": "Record them explaining a meme to you."
+    },
+    {
+      "id": 186,
+      "ageBucket": "10-18yr",
+      "text": "What did you argue about today? (Be honest)."
+    },
+    {
+      "id": 187,
+      "ageBucket": "10-18yr",
+      "text": "Take a photo of their favorite gadget/device."
+    },
+    {
+      "id": 188,
+      "ageBucket": "10-18yr",
+      "text": "What is their \"dream job\" this week?"
+    },
+    {
+      "id": 189,
+      "ageBucket": "10-18yr",
+      "text": "Reflect: What is the hardest part of letting them grow up right now?"
+    },
+    {
+      "id": 190,
+      "ageBucket": "10-18yr",
+      "text": "What did they cook or make for themselves?"
+    },
+    {
+      "id": 191,
+      "ageBucket": "10-18yr",
+      "text": "Who is a celebrity they admire?"
+    },
+    {
+      "id": 192,
+      "ageBucket": "10-18yr",
+      "text": "Take a photo of them in their \"natural habitat\" (room/couch)."
+    },
+    {
+      "id": 193,
+      "ageBucket": "10-18yr",
+      "text": "What advice did they give you (seriously or jokingly)?"
+    },
+    {
+      "id": 194,
+      "ageBucket": "10-18yr",
+      "text": "\"You are really good at...\" (Observe them)."
+    },
+    {
+      "id": 195,
+      "ageBucket": "10-18yr",
+      "text": "Record them laughing with friends."
+    },
+    {
+      "id": 196,
+      "ageBucket": "10-18yr",
+      "text": "What is a secret they told you?"
+    },
+    {
+      "id": 197,
+      "ageBucket": "10-18yr",
+      "text": "Take a photo of something they borrowed from you."
+    },
+    {
+      "id": 198,
+      "ageBucket": "10-18yr",
+      "text": "What are they saving up for?"
+    },
+    {
+      "id": 199,
+      "ageBucket": "10-18yr",
+      "text": "What did they forget to do today?"
+    },
+    {
+      "id": 200,
+      "ageBucket": "10-18yr",
+      "text": "Reflect: Write a letter to them for their high school graduation day."
     }
   ],
   "ageBuckets": [
-    {"id": "0-12mo", "label": "0-12 months", "minDays": 0, "maxDays": 365},
-    {"id": "1-3yr", "label": "1-3 years", "minDays": 366, "maxDays": 1095},
-    {"id": "3-5yr", "label": "3-5 years", "minDays": 1096, "maxDays": 1825},
-    {"id": "5-10yr", "label": "5-10 years", "minDays": 1826, "maxDays": 3650},
-    {"id": "10-18yr", "label": "10-18 years", "minDays": 3651, "maxDays": 6570}
+    {
+      "id": "0-12mo",
+      "label": "0-12 months",
+      "minDays": 0,
+      "maxDays": 365
+    },
+    {
+      "id": "1-3yr",
+      "label": "1-3 years",
+      "minDays": 366,
+      "maxDays": 1095
+    },
+    {
+      "id": "3-5yr",
+      "label": "3-5 years",
+      "minDays": 1096,
+      "maxDays": 1825
+    },
+    {
+      "id": "5-10yr",
+      "label": "5-10 years",
+      "minDays": 1826,
+      "maxDays": 3650
+    },
+    {
+      "id": "10-18yr",
+      "label": "10-18 years",
+      "minDays": 3651,
+      "maxDays": 6570
+    }
   ]
 }
