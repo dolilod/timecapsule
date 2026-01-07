@@ -3,13 +3,14 @@ import * as WebBrowser from 'expo-web-browser';
 import * as SecureStore from 'expo-secure-store';
 import { encode as base64Encode } from 'base-64';
 import * as FileSystem from 'expo-file-system';
+import Constants from 'expo-constants';
 
 // Complete auth session for web browser redirect
 WebBrowser.maybeCompleteAuthSession();
 
-// Constants
-const GOOGLE_CLIENT_ID_IOS = '788944197232-b4vf9e0rl0fr1ia2keg5q16m2plrooo1.apps.googleusercontent.com';
-const GOOGLE_CLIENT_ID_ANDROID = 'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com';
+// Get client IDs from app config (set via environment variables)
+const GOOGLE_CLIENT_ID_IOS = Constants.expoConfig?.extra?.googleClientIdIos || '';
+const GOOGLE_CLIENT_ID_ANDROID = Constants.expoConfig?.extra?.googleClientIdAndroid || '';
 
 const STORAGE_KEYS = {
   ACCESS_TOKEN: 'gmail_access_token',
