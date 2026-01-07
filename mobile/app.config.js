@@ -1,6 +1,9 @@
-// Load environment variables
-const GOOGLE_CLIENT_ID_IOS = process.env.GOOGLE_CLIENT_ID_IOS || '';
-const GOOGLE_CLIENT_ID_ANDROID = process.env.GOOGLE_CLIENT_ID_ANDROID || '';
+// Load environment variables (with development defaults)
+// For production, set these via EAS Secrets
+const GOOGLE_CLIENT_ID_IOS = process.env.GOOGLE_CLIENT_ID_IOS ||
+  '788944197232-b4vf9e0rl0fr1ia2keg5q16m2plrooo1.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID_ANDROID = process.env.GOOGLE_CLIENT_ID_ANDROID ||
+  'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com';
 
 // Extract the reversed client ID for iOS URL scheme
 const getReversedClientId = (clientId) => {

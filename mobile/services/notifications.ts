@@ -148,6 +148,25 @@ export function formatReminderTime(time: ReminderTime): string {
   return `${hour12}:${minuteStr} ${ampm}`;
 }
 
+// Compute the next Date when a reminder will fire based on local time
+export function getNextReminderDate(time: ReminderTime, now: Date = new Date()): Date {
+  const next = new Date(now);
+  next.setHours(time.hour, time.minute, 0, 0);
+  if (next.getTime() <= now.getTime()) {
+    // If the configured time today has passed, schedule for tomorrow
+    next.setDate(next.getDate() + 1);
+  }
+  return next;
+}
+
+// Human-friendly preview: "Today at 8:00 PM" or "Tomorrow at 8:00 PM"
+export function formatNextReminder(time: ReminderTime, now: Date = new Date()): string {
+  const next = getNextReminderDate(time, now);
+  const isToday = next.toDateString() === now.toDateString();
+  const label = isToday ? 'Today' : 'Tomorrow';
+  return `${label} at ${formatReminderTime(time)}`;
+}
+
 // Setup notification response listener (for handling taps)
 export function setupNotificationResponseListener(): () => void {
   const subscription = Notifications.addNotificationResponseReceivedListener((response) => {

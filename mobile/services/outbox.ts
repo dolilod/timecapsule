@@ -115,11 +115,30 @@ export async function retrySendEntry(
   }
 
   try {
+    // Size guard to avoid oversize emails on retry
+    const MAX_TOTAL_BYTES = 20 * 1024 * 1024; // ~20 MB
+    if (entry.photoUris && entry.photoUris.length > 0) {
+      let total = 0;
+      for (const uri of entry.photoUris) {
+        try {
+          const info = await FileSystem.getInfoAsync(uri);
+          if (info.exists && typeof info.size === 'number') total += info.size;
+        } catch {}
+      }
+      if (total > MAX_TOTAL_BYTES) {
+        await updateOutboxEntry(entry.id, {
+          status: 'failed',
+          errorMessage: 'Attachments exceed size limit (~20 MB). Remove some photos and retry.',
+        });
+        return { success: false, error: 'Attachments exceed size limit' };
+      }
+    }
+
     const result = await sendEmail({
       to: entry.childEmail,
       subject: entry.subject,
       body: entry.body,
-      photoUri: entry.photoUris?.[0],
+      photoUris: entry.photoUris && entry.photoUris.length > 0 ? [...entry.photoUris] : undefined,
     });
 
     if (result.success) {

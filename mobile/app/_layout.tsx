@@ -12,6 +12,7 @@ import { hasCompletedOnboarding } from '@/services/storage';
 import { setupNotificationResponseListener } from '@/services/notifications';
 import { autoRetryPending, getPendingCount } from '@/services/outbox';
 import { isGmailConnected } from '@/services/gmail';
+import { ToastProvider } from '@/components/ui';
 
 export {
   ErrorBoundary,
@@ -132,17 +133,19 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="onboarding"
-          options={{
-            headerShown: false,
-            gestureEnabled: false,
-          }}
-        />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
+      <ToastProvider>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="onboarding"
+            options={{
+              headerShown: false,
+              gestureEnabled: false,
+            }}
+          />
+          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        </Stack>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

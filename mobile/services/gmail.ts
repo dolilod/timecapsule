@@ -36,11 +36,14 @@ export interface GmailTokens {
   userEmail: string;
 }
 
+// Conservative limits to avoid Gmail size errors
+const MAX_ATTACHMENTS = 5; // safety cap
+
 export interface EmailPayload {
   to: string;
   subject: string;
   body: string;
-  photoUri?: string;
+  photoUris?: string[]; // zero or more attachments
 }
 
 // Get redirect URI for the current platform
@@ -265,7 +268,8 @@ async function buildMimeMessage(
   message += `Subject: ${payload.subject}\r\n`;
   message += 'MIME-Version: 1.0\r\n';
 
-  if (payload.photoUri) {
+  if (payload.photoUris && payload.photoUris.length > 0) {
+    const uris = payload.photoUris.slice(0, MAX_ATTACHMENTS);
     // Multipart message with attachment
     message += `Content-Type: multipart/mixed; boundary="${boundary}"\r\n\r\n`;
 
@@ -274,25 +278,23 @@ async function buildMimeMessage(
     message += 'Content-Type: text/plain; charset="UTF-8"\r\n\r\n';
     message += `${payload.body}\r\n\r\n`;
 
-    // Photo attachment
-    try {
-      const photoBase64 = await FileSystem.readAsStringAsync(payload.photoUri, {
-        encoding: 'base64',
-      });
+    // Photo attachments (one part per photo)
+    for (const uri of uris) {
+      try {
+        const photoBase64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+        const filename = uri.split('/').pop() || 'photo.jpg';
+        const lower = filename.toLowerCase();
+        const mimeType = lower.endsWith('.png') ? 'image/png' : lower.endsWith('.heic') ? 'image/heic' : 'image/jpeg';
 
-      const filename = payload.photoUri.split('/').pop() || 'photo.jpg';
-      const mimeType = filename.toLowerCase().endsWith('.png')
-        ? 'image/png'
-        : 'image/jpeg';
-
-      message += `--${boundary}\r\n`;
-      message += `Content-Type: ${mimeType}\r\n`;
-      message += 'Content-Transfer-Encoding: base64\r\n';
-      message += `Content-Disposition: attachment; filename="${filename}"\r\n\r\n`;
-      message += `${photoBase64}\r\n`;
-    } catch (error) {
-      console.error('Error reading photo:', error);
-      // Continue without attachment
+        message += `--${boundary}\r\n`;
+        message += `Content-Type: ${mimeType}\r\n`;
+        message += 'Content-Transfer-Encoding: base64\r\n';
+        message += `Content-Disposition: attachment; filename="${filename}"\r\n\r\n`;
+        message += `${photoBase64}\r\n`;
+      } catch (error) {
+        console.error('Error reading photo:', error);
+        // Skip this attachment and continue
+      }
     }
 
     message += `--${boundary}--`;
