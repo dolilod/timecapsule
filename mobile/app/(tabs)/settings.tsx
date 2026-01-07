@@ -33,9 +33,9 @@ import {
   isGmailConnected,
   getConnectedEmail,
   disconnectGmail,
-  createAuthRequest,
   exchangeCodeForTokens,
   getRedirectUri,
+  getClientId,
 } from '@/services/gmail';
 import * as AuthSession from 'expo-auth-session';
 import { ChildProfile } from '@/types';
@@ -47,6 +47,9 @@ const discovery = {
   tokenEndpoint: 'https://oauth2.googleapis.com/token',
   revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
 };
+
+// Gmail send scope
+const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.send';
 
 export default function SettingsScreen() {
   const [child, setChild] = useState<ChildProfile | null>(null);
@@ -67,7 +70,21 @@ export default function SettingsScreen() {
   const [gmailConnected, setGmailConnected] = useState(false);
   const [gmailEmail, setGmailEmail] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [authRequest, setAuthRequest] = useState<AuthSession.AuthRequest | null>(null);
+
+  // Use the useAuthRequest hook for proper OAuth handling in native apps
+  const [request, response, promptAsync] = AuthSession.useAuthRequest(
+    {
+      clientId: getClientId(),
+      scopes: ['openid', 'email', 'profile', GMAIL_SCOPE],
+      redirectUri: getRedirectUri(),
+      usePKCE: true,
+      extraParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    },
+    discovery
+  );
 
   const loadData = useCallback(async () => {
     const defaultChild = await getDefaultChild();
@@ -91,10 +108,6 @@ export default function SettingsScreen() {
       const email = await getConnectedEmail();
       setGmailEmail(email);
     }
-
-    // Prepare auth request
-    const request = createAuthRequest();
-    setAuthRequest(request);
   }, []);
 
   useFocusEffect(
@@ -102,6 +115,57 @@ export default function SettingsScreen() {
       loadData();
     }, [loadData])
   );
+
+  // Handle OAuth response using useEffect (this is the key pattern for native apps)
+  React.useEffect(() => {
+    const handleAuthResponse = async () => {
+      console.log('Auth response changed:', response?.type);
+      console.log('Auth response full:', JSON.stringify(response, null, 2));
+
+      if (response?.type === 'success') {
+        const code = response.params?.code;
+        console.log('Got auth code:', code ? 'yes' : 'no');
+        console.log('Request code verifier:', request?.codeVerifier ? 'present' : 'missing');
+
+        if (code && request?.codeVerifier) {
+          setIsConnecting(true);
+          try {
+            console.log('Exchanging code for tokens...');
+            const tokens = await exchangeCodeForTokens(code, request.codeVerifier);
+            console.log('Token exchange result:', tokens ? 'success' : 'failed');
+
+            if (tokens) {
+              setGmailConnected(true);
+              setGmailEmail(tokens.userEmail);
+              Alert.alert('Success', `Gmail connected as ${tokens.userEmail}`);
+            } else {
+              Alert.alert('Error', 'Failed to exchange tokens. Check console for details.');
+            }
+          } catch (error) {
+            console.error('Error in token exchange:', error);
+            Alert.alert('Error', 'Failed to connect Gmail.');
+          } finally {
+            setIsConnecting(false);
+          }
+        } else {
+          console.log('Missing code or code verifier');
+          if (!code) console.log('No code in params');
+          if (!request?.codeVerifier) console.log('No code verifier in request');
+        }
+      } else if (response?.type === 'error') {
+        console.log('Auth error:', response.error);
+        Alert.alert('Error', response.error?.message || 'Authentication failed.');
+        setIsConnecting(false);
+      } else if (response?.type === 'dismiss') {
+        console.log('Auth dismissed by user');
+        setIsConnecting(false);
+      }
+    };
+
+    if (response) {
+      handleAuthResponse();
+    }
+  }, [response, request]);
 
   const handleToggleNotifications = async (enabled: boolean) => {
     setNotificationsEnabledState(enabled);
@@ -139,39 +203,24 @@ export default function SettingsScreen() {
   };
 
   const handleConnectGmail = async () => {
-    if (!authRequest) {
+    if (!request) {
       Alert.alert('Error', 'Auth request not ready. Please try again.');
       return;
     }
 
     setIsConnecting(true);
     try {
-      const result = await authRequest.promptAsync(discovery);
+      // Log redirect URI and code verifier for debugging
+      console.log('Starting OAuth with redirect URI:', getRedirectUri());
+      console.log('Code verifier available:', !!request.codeVerifier);
+      console.log('Request ready:', !!request);
 
-      if (result.type === 'success' && result.params.code) {
-        const tokens = await exchangeCodeForTokens(
-          result.params.code,
-          authRequest.codeVerifier || ''
-        );
-
-        if (tokens) {
-          setGmailConnected(true);
-          setGmailEmail(tokens.userEmail);
-          Alert.alert('Success', 'Gmail connected successfully!');
-        } else {
-          Alert.alert('Error', 'Failed to complete authentication.');
-        }
-      } else if (result.type === 'error') {
-        Alert.alert('Error', result.error?.message || 'Authentication failed.');
-      }
+      // promptAsync will trigger the response via the useEffect hook
+      await promptAsync();
     } catch (error) {
-      console.error('Error connecting Gmail:', error);
-      Alert.alert('Error', 'Failed to connect Gmail. Please try again.');
-    } finally {
+      console.error('Error starting OAuth:', error);
+      Alert.alert('Error', 'Failed to start Gmail authentication.');
       setIsConnecting(false);
-      // Recreate auth request for next attempt
-      const request = createAuthRequest();
-      setAuthRequest(request);
     }
   };
 
@@ -417,12 +466,12 @@ export default function SettingsScreen() {
                 Connect your Gmail to send memories to your child's email
               </Text>
               <TouchableOpacity
-                style={[styles.connectButton, isConnecting && styles.buttonDisabled]}
+                style={[styles.connectButton, (isConnecting || !request) && styles.buttonDisabled]}
                 onPress={handleConnectGmail}
-                disabled={isConnecting}
+                disabled={isConnecting || !request}
               >
                 <Text style={styles.connectButtonText}>
-                  {isConnecting ? 'Connecting...' : 'Connect Gmail'}
+                  {isConnecting ? 'Connecting...' : !request ? 'Loading...' : 'Connect Gmail'}
                 </Text>
               </TouchableOpacity>
             </>

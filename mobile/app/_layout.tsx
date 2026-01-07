@@ -112,11 +112,22 @@ function RootLayoutNav() {
 
     const inOnboarding = segments[0] === 'onboarding';
 
-    if (!isOnboardingComplete && !inOnboarding) {
-      router.replace('/onboarding');
-    } else if (isOnboardingComplete && inOnboarding) {
-      router.replace('/(tabs)/compose');
-    }
+    const handleNavigation = async () => {
+      if (!isOnboardingComplete && !inOnboarding) {
+        // Before redirecting to onboarding, double-check the storage
+        // This handles race condition where profile was just saved
+        const completed = await hasCompletedOnboarding();
+        if (!completed) {
+          router.replace('/onboarding');
+        } else {
+          setIsOnboardingComplete(true);
+        }
+      } else if (isOnboardingComplete && inOnboarding) {
+        router.replace('/(tabs)/compose');
+      }
+    };
+
+    handleNavigation();
   }, [isOnboardingComplete, segments]);
 
   return (

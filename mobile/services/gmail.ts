@@ -8,7 +8,7 @@ import * as FileSystem from 'expo-file-system';
 WebBrowser.maybeCompleteAuthSession();
 
 // Constants
-const GOOGLE_CLIENT_ID_IOS = 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID_IOS = '788944197232-b4vf9e0rl0fr1ia2keg5q16m2plrooo1.apps.googleusercontent.com';
 const GOOGLE_CLIENT_ID_ANDROID = 'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com';
 
 const STORAGE_KEYS = {
@@ -43,11 +43,14 @@ export interface EmailPayload {
 }
 
 // Get redirect URI for the current platform
+// For iOS, Google requires reversed client ID format
 export function getRedirectUri(): string {
-  return AuthSession.makeRedirectUri({
-    scheme: 'timecapsule',
-    path: 'oauth',
-  });
+  // Extract client ID prefix (before .apps.googleusercontent.com)
+  const clientId = getClientId();
+  const clientIdPrefix = clientId.split('.apps.googleusercontent.com')[0];
+
+  // iOS uses reversed client ID as scheme
+  return `com.googleusercontent.apps.${clientIdPrefix}:/oauth2redirect/google`;
 }
 
 // Get client ID based on platform
@@ -76,7 +79,14 @@ export async function exchangeCodeForTokens(
   code: string,
   codeVerifier: string
 ): Promise<GmailTokens | null> {
+  console.log('exchangeCodeForTokens called');
+  console.log('Code length:', code?.length);
+  console.log('Code verifier length:', codeVerifier?.length);
+  console.log('Client ID:', getClientId());
+  console.log('Redirect URI:', getRedirectUri());
+
   try {
+    console.log('Calling AuthSession.exchangeCodeAsync...');
     const tokenResponse = await AuthSession.exchangeCodeAsync(
       {
         clientId: getClientId(),
@@ -89,12 +99,17 @@ export async function exchangeCodeForTokens(
       discovery
     );
 
+    console.log('Token response received');
+    console.log('Access token:', tokenResponse.accessToken ? 'present' : 'missing');
+    console.log('Refresh token:', tokenResponse.refreshToken ? 'present' : 'missing');
+
     if (!tokenResponse.accessToken) {
       console.error('No access token in response');
       return null;
     }
 
     // Get user email from Google's userinfo endpoint
+    console.log('Fetching user info...');
     const userInfoResponse = await fetch(
       'https://www.googleapis.com/oauth2/v2/userinfo',
       {
@@ -104,6 +119,7 @@ export async function exchangeCodeForTokens(
       }
     );
     const userInfo = await userInfoResponse.json();
+    console.log('User info response:', JSON.stringify(userInfo));
 
     const tokens: GmailTokens = {
       accessToken: tokenResponse.accessToken,
@@ -114,10 +130,16 @@ export async function exchangeCodeForTokens(
       userEmail: userInfo.email || '',
     };
 
+    console.log('Saving tokens...');
     await saveTokens(tokens);
+    console.log('Tokens saved successfully');
     return tokens;
   } catch (error) {
     console.error('Error exchanging code for tokens:', error);
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
     return null;
   }
 }
@@ -283,10 +305,14 @@ async function buildMimeMessage(
 }
 
 // URL-safe base64 encoding for Gmail API
+// Handles Unicode characters by first encoding to UTF-8
 function base64UrlEncode(str: string): string {
-  // First encode to base64
-  const base64 = base64Encode(str);
-  // Then make it URL-safe
+  // Convert Unicode string to UTF-8 bytes, then base64 encode
+  // encodeURIComponent handles Unicode -> UTF-8 percent-encoding
+  // unescape converts percent-encoding to actual bytes
+  const utf8Bytes = unescape(encodeURIComponent(str));
+  const base64 = base64Encode(utf8Bytes);
+  // Make it URL-safe for Gmail API
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
